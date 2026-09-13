@@ -13,7 +13,7 @@
 #     Budi RT03 - 20Mbps | DUE:15
 #  -> jatuh tempo tanggal 15. Pakai tanggal 1-28 saja.
 #
-#  Opsional: kirim Telegram H-1 & H (isi TOKEN & CHATID).
+#  Opsional: kirim Telegram H-1 (isi TOKEN & CHATID).
 # ============================================================
 
 # ---- opsional Telegram (kosongkan botToken utk mematikan) ----
@@ -66,7 +66,12 @@
                     :set dstr ($dstr . $c)
                     :set i ($i + 1)
                 } else={
-                    :set stop true
+                    # toleran spasi sebelum angka (mis. "DUE: 15")
+                    :if (($c = " ") && ($dstr = "")) do={
+                        :set i ($i + 1)
+                    } else={
+                        :set stop true
+                    }
                 }
             }
 
@@ -93,7 +98,7 @@
                                      "\\nJatuh tempo: " . $kapan . " (tgl " . $due . ")")
                         :do {
                             /tool fetch keep-result=no http-method=post \
-                                http-header-field-value="Content-Type: application/json" \
+                                http-header-field="Content-Type: application/json" \
                                 url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
                                 http-data=("{\"chat_id\":\"" . $chatId . "\",\"text\":\"" . $teks . "\"}")
                         } on-error={}

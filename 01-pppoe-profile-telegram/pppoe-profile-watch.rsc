@@ -4,7 +4,7 @@
 #  lalu kirim notifikasi Telegram.
 #
 #  Target : RouterOS 7.24.2 (x86 / HP ProDesk 600 G5)
-#  Jalan  : via scheduler, interval 1 menit
+#  Jalan  : via scheduler, interval 1 jam
 #  State  : global variable (RAM). Reset saat reboot = aman
 #           (baseline ulang, tidak spam).
 # ============================================================
@@ -36,7 +36,7 @@
 
             :do {
                 /tool fetch keep-result=no http-method=post \
-                    http-header-field-value="Content-Type: application/json" \
+                    http-header-field="Content-Type: application/json" \
                     url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
                     http-data=("{\"chat_id\":\"" . $chatId . "\",\"text\":\"" . $teks . "\"}")
             } on-error={
