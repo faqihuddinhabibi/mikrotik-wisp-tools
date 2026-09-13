@@ -1,9 +1,10 @@
 # ============================================================
 #  Billing Scheduler — isi address-list "tagihan-reminder"
 #  Baca tanggal jatuh tempo (DUE:NN) dari comment tiap
-#  /ppp secret. Kalau hari ini = H atau H-1 jatuh tempo,
+#  /ppp secret. Kalau BESOK jatuh tempo (H-1),
 #  masukkan IP user yang sedang online ke address-list
 #  "tagihan-reminder" -> otomatis kena redirect walled-garden.
+#  (Hari-H sengaja dilewati: yang sudah bayar tidak terganggu.)
 #
 #  Target : RouterOS 7.24.2 (x86)
 #  Jalan  : scheduler tiap 1 jam (granularitas billing = harian)
@@ -59,7 +60,8 @@
                 :local kena false
                 :local kapan ""
 
-                :if ($due = $today) do={ :set kena true; :set kapan "HARI INI" }
+                # HANYA H-1 (besok jatuh tempo). Hari-H sengaja dilewati
+                # supaya pelanggan yang sudah bayar tidak terganggu.
                 :if ($due = ($today + 1)) do={ :set kena true; :set kapan "BESOK" }
 
                 :if ($kena) do={

@@ -25,15 +25,14 @@ Kirim notifikasi **Telegram** setiap kali **profile** sebuah user PPPoE berubah
 jadi ini pakai scheduler yang mengecek berkala. Lihat README di dalam folder.
 
 ### 📁 [02-reminder-tagihan-walled-garden](02-reminder-tagihan-walled-garden/)
-Saat customer terhubung dan **hari-H / H-1 jatuh tempo**, trafik HTTP mereka
+Saat customer terhubung dan **besok jatuh tempo (H-1)**, trafik HTTP mereka
 di-redirect otomatis ke **halaman pengingat tagihan** (mirip splash page wifi.id).
 Pakai **web-proxy bawaan RouterOS** + **address-list** + **scheduler**. Tanpa container.
 Halaman di-host di **GitHub Pages** (folder [`docs/`](docs/)).
 
 ### 📁 [docs](docs/)
 Halaman HTML yang tampil ke customer, di-host lewat GitHub Pages:
-- `index.html` — halaman pengingat tagihan (H-1 & hari-H)
-- `besok.html` — (opsional) versi khusus "besok jatuh tempo"
+- `index.html` — halaman pengingat tagihan (**H-1 / besok jatuh tempo**), minimalis
 - `isolir.html` — (opsional) halaman "internet diisolir, tagihan belum dibayar"
 
 URL setelah GitHub Pages aktif:

@@ -1,6 +1,6 @@
 # 02 — Reminder Tagihan (Walled-Garden mirip wifi.id)
 
-Saat customer **online** dan **hari-H / H-1 jatuh tempo**, semua trafik **HTTP**
+Saat customer **online** dan **besok jatuh tempo (H-1)**, semua trafik **HTTP**
 mereka dibelokkan ke **halaman pengingat tagihan**. Di HP, notifikasi
 "Sign in to network" akan muncul sendiri (captive-portal detection) → halaman
 kebuka otomatis, mirip splash page wifi.id.
@@ -16,9 +16,9 @@ Semua pakai fitur **bawaan RouterOS** (web-proxy + address-list + NAT + schedule
         (tiap 1 jam)
 scheduler billing-scheduler.rsc
         │  baca DUE: dari comment tiap /ppp secret
-        │  hari ini == DUE atau DUE-1 ?
+        │  DUE == besok ? (H-1)
         ▼
-address-list "tagihan-reminder"  ← IP user yang online + jatuh tempo
+address-list "tagihan-reminder"  ← IP user online yang besok jatuh tempo
         │
         ▼
 NAT: HTTP (port 80) dari list itu  ─redirect→  web-proxy :8080
@@ -91,7 +91,8 @@ Tambahkan `DUE:NN` di comment tiap `/ppp secret` (NN = tanggal 1–28):
    ```
 
 ### E. Tes end-to-end
-- Set salah satu user `DUE:` = tanggal hari ini.
+- Set salah satu user `DUE:` = tanggal **BESOK** (karena remindernya H-1).
+  Contoh kalau hari ini tgl 14: `DUE:15`.
 - Pastikan user itu **online** (`/ppp active print`).
 - Jalankan `billing-scheduler` → IP-nya masuk `tagihan-reminder`.
 - Dari perangkat di belakang router customer itu, buka situs **http://** (mis. `http://neverssl.com`).
@@ -121,7 +122,7 @@ tambahkan di **`/ppp profile`** (profile normal mereka), field **On Up**:
         }
         :if ([:len $dstr] > 0) do={
             :local due [:tonum $dstr]
-            :if (($due = $today) || ($due = ($today + 1))) do={
+            :if ($due = ($today + 1)) do={
                 /ip firewall address-list add list="tagihan-reminder" address=$ip comment=$nama timeout=2h
             }
         }
