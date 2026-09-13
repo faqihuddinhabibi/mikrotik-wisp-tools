@@ -21,6 +21,14 @@
 :local chatId   ""
 # --------------------------------------------------------------
 
+# ---- daftar user yang TIDAK pernah direminder ----
+# Cara ini alternatif dari tag "SKIP" di comment: cukup tulis nama
+# persis (sama seperti di /ppp secret), dipisah koma, DIAPIT koma
+# di awal & akhir. Kosongkan (",,") kalau tidak dipakai.
+# Contoh: ",kantor-desa,sekolah-01,puskesmas,"
+:local excludeNames ",,"
+# --------------------------------------------------------------
+
 # tanggal hari ini (RouterOS 7: format YYYY-MM-DD)
 :local tgl [/system clock get date]
 :local today [:tonum [:pick $tgl 8 10]]
@@ -36,9 +44,12 @@
     :if ([:len $sid] > 0) do={
         :local cmt [/ppp secret get $sid comment]
 
-        # PENGECUALIAN: kalau comment mengandung "SKIP", user ini tidak
-        # pernah dikirim reminder (mis. instansi yang bayar 3 bulan sekali).
-        :local dikecualikan ([:typeof [:find $cmt "SKIP"]] = "num")
+        # PENGECUALIAN (2 cara, salah satu cukup):
+        #  a) comment mengandung kata "SKIP"
+        #  b) nama user terdaftar di excludeNames di atas
+        :local dikecualikan false
+        :if ([:typeof [:find $cmt "SKIP"]] = "num") do={ :set dikecualikan true }
+        :if ([:typeof [:find $excludeNames ("," . $nama . ",")]] = "num") do={ :set dikecualikan true }
 
         # cari token "DUE:" lalu ambil angka setelahnya
         :local key "DUE:"

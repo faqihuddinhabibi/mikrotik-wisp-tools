@@ -66,13 +66,24 @@ Tambahkan `DUE:NN` di comment tiap `/ppp secret` (NN = tanggal 1–28):
 /ppp secret set [find name=siti] comment="Siti - 10Mbps | DUE:5"
 ```
 
-**Kecualikan pelanggan tertentu** (mis. instansi yang bayar 3 bulan sekali):
-tambahkan kata **`SKIP`** di mana saja pada comment. Pelanggan itu **tidak akan
-pernah** kena halaman reminder, walaupun ada `DUE:`.
+**Kecualikan pelanggan tertentu** (mis. instansi yang bayar 3 bulan sekali).
+Ada **2 cara**, pilih salah satu:
+
+**Cara A — tag `SKIP` di comment.** Tambahkan kata `SKIP` di mana saja pada comment:
 ```rsc
 /ppp secret set [find name=kantor-desa] comment="Kantor Desa - bayar per 3 bln SKIP"
 ```
-Hapus kata `SKIP` kalau nanti mau diaktifkan lagi.
+Hapus kata `SKIP` kalau mau diaktifkan lagi.
+
+**Cara B — daftar nama di script** (tanpa menyentuh comment). Buka
+`billing-scheduler.rsc`, isi variabel `excludeNames` dengan nama-nama user
+(persis seperti di `/ppp secret`), dipisah koma, **diapit koma**:
+```rsc
+:local excludeNames ",kantor-desa,sekolah-01,puskesmas,"
+```
+User yang tercantum **tidak akan pernah** kena halaman reminder walau ada `DUE:`.
+
+Keduanya berlaku bersamaan — user kena kalau cocok salah satu.
 
 ### C. Setup walled-garden (sekali)
 1. Buka [`setup-walled-garden.rsc`](setup-walled-garden.rsc).
