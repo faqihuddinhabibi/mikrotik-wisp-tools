@@ -10,8 +10,12 @@ RouterOS **tidak punya trigger** untuk "secret diedit". Yang ada hanya:
 - `on-up` / `on-down` di menu `/ppp profile` → jalan saat user **connect / disconnect**.
 - **Tidak ada** hook saat kamu mengganti field `profile` di sebuah secret.
 
-Jadi cara satu-satunya: **polling** — script mengecek berkala (tiap 1 menit),
+Jadi cara satu-satunya: **polling** — script mengecek berkala (tiap 1 jam),
 menyimpan profile terakhir yang diketahui, lalu membandingkan. Kalau beda → kirim Telegram.
+
+> Interval 1 jam sudah cukup: perubahan profile itu jarang & tidak butuh deteksi
+> per-detik. Konsekuensinya notif bisa telat maksimal 1 jam. Kalau suatu saat mau
+> lebih cepat, ganti `interval=1h` → `interval=5m` di scheduler.
 
 ## Di mana state disimpan?
 
@@ -60,16 +64,18 @@ Atau lewat terminal — jalankan isi file, atau import:
 /import file-name=pppoe-profile-watch.rsc
 ```
 
-### 4. Pasang scheduler (jalan tiap 1 menit)
+### 4. Pasang scheduler (jalan tiap 1 jam)
 ```rsc
 /system scheduler
-add name=pppoe-profile-watch interval=1m on-event="/system script run pppoe-profile-watch" \
+add name=pppoe-profile-watch interval=1h on-event="/system script run pppoe-profile-watch" \
     comment="Cek perubahan profile PPPoE -> Telegram"
 ```
 
 ### 5. Tes
 - Ganti profile salah satu user di `/ppp secret` (misal `aktif` → `isolir`).
-- Tunggu ≤ 1 menit → pesan masuk Telegram.
+- Untuk tes cepat, jalankan manual: `/system script run pppoe-profile-watch`
+  (jalankan sekali dulu untuk baseline, ganti profile, jalankan lagi → notif masuk).
+- Pada operasi normal, notif datang di siklus 1 jam berikutnya.
 
 ---
 
