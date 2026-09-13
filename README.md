@@ -60,3 +60,10 @@ Artinya: pelanggan "Budi", jatuh tempo **tanggal 15** tiap bulan.
 - Script **profile-watch** (folder 01) tidak menyentuh comment sama sekali (state disimpan di RAM).
 
 > Gunakan tanggal **1–28** agar logika H-1 aman di semua bulan (hindari 29/30/31).
+
+Untuk mengecualikan pelanggan dari halaman reminder (mis. instansi yang bayar 3 bulan
+sekali), tambahkan kata **`SKIP`** di comment-nya:
+
+```
+Kantor Desa - bayar per 3 bln SKIP
+```

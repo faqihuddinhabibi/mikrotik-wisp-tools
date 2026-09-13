@@ -36,6 +36,10 @@
     :if ([:len $sid] > 0) do={
         :local cmt [/ppp secret get $sid comment]
 
+        # PENGECUALIAN: kalau comment mengandung "SKIP", user ini tidak
+        # pernah dikirim reminder (mis. instansi yang bayar 3 bulan sekali).
+        :local dikecualikan ([:typeof [:find $cmt "SKIP"]] = "num")
+
         # cari token "DUE:" lalu ambil angka setelahnya
         :local key "DUE:"
         :local p [:find $cmt $key]
@@ -64,7 +68,7 @@
                 # supaya pelanggan yang sudah bayar tidak terganggu.
                 :if ($due = ($today + 1)) do={ :set kena true; :set kapan "BESOK" }
 
-                :if ($kena) do={
+                :if ($kena && (!$dikecualikan)) do={
                     # timeout 2 jam: kalau user bayar & dihapus manual, tetap auto-bersih.
                     # Scheduler jam berikutnya akan menambah lagi bila masih jatuh tempo.
                     /ip firewall address-list add list="tagihan-reminder" \

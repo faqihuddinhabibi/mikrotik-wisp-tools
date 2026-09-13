@@ -66,6 +66,14 @@ Tambahkan `DUE:NN` di comment tiap `/ppp secret` (NN = tanggal 1–28):
 /ppp secret set [find name=siti] comment="Siti - 10Mbps | DUE:5"
 ```
 
+**Kecualikan pelanggan tertentu** (mis. instansi yang bayar 3 bulan sekali):
+tambahkan kata **`SKIP`** di mana saja pada comment. Pelanggan itu **tidak akan
+pernah** kena halaman reminder, walaupun ada `DUE:`.
+```rsc
+/ppp secret set [find name=kantor-desa] comment="Kantor Desa - bayar per 3 bln SKIP"
+```
+Hapus kata `SKIP` kalau nanti mau diaktifkan lagi.
+
 ### C. Setup walled-garden (sekali)
 1. Buka [`setup-walled-garden.rsc`](setup-walled-garden.rsc).
 2. Pastikan baris `redirectUrl` benar (default sudah sesuai repo ini).
