@@ -56,6 +56,10 @@ Scheduler tiap ~30 detik jalankan "kirim-notif":
   loop berat, tidak ada `fetch` → tidak kena race saat sesi turun.
 - **Pengiriman** dilakukan scheduler di konteks sistem → `fetch` selalu tuntas.
 - **Maksimal 1 pesan per interval** → jauh di bawah limit Telegram.
+- Saat mengirim, tiap nama yang berubah **dicek status terkininya** (masih online
+  / offline), lalu dikelompokkan ke **UP** atau **DOWN** — jadi teknisi tahu
+  **kondisi sekarang**, bukan cuma "ada kejadian". Hanya user yang berubah yang
+  dicek → tetap ringan walau ratusan pelanggan.
 
 ---
 
@@ -119,11 +123,14 @@ Isinya cuma 3 baris — tidak ada token, tidak ada fetch.
 📡 Update Koneksi
 2026-09-14 22:00:00
 
-✅ UP: budi, andi
-❌ DOWN: siti
+✅ UP (2): budi, andi
+❌ DOWN (1): siti
 ```
-Kalau salah satu kosong pada interval itu, tampil `-`. Kalau **dua-duanya** kosong,
-tidak ada pesan (hemat).
+- Angka dalam kurung = **jumlah** user di daftar itu.
+- **UP / DOWN = status SAAT INI** (dicek pas kirim). Jadi kalau `budi` sempat putus
+  lalu nyambung lagi sebelum pesan dikirim, dia masuk **UP** (karena sekarang online).
+  Teknisi langsung tahu yang **masih mati** ada di daftar DOWN.
+- Kalau salah satu kosong → tampil `-`. Kalau **dua-duanya** kosong → tidak ada pesan.
 
 **Template** ada di baris `:local teks (...)` dalam [`kirim-notif.rsc`](kirim-notif.rsc).
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
@@ -132,12 +139,14 @@ tidak ada pesan (hemat).
   | Kode | Arti |
   |------|------|
   | `$waktu` | tanggal & jam saat pengiriman |
-  | `$up` | daftar nama yang connect sejak cek terakhir |
-  | `$down` | daftar nama yang disconnect sejak cek terakhir |
+  | `$up` | daftar nama yang **sekarang online** (dari yang berubah) |
+  | `$nUp` | jumlah user di daftar UP |
+  | `$down` | daftar nama yang **sekarang offline** (dari yang berubah) |
+  | `$nDown` | jumlah user di daftar DOWN |
 
-**Contoh ubah** (cuma yang putus):
+**Contoh ubah** (cuma yang masih mati):
 ```rsc
-:local teks ("❌ DOWN: " . $down)
+:local teks ("❌ DOWN (" . $nDown . "): " . $down)
 ```
 
 ---
@@ -152,10 +161,14 @@ pesan per interval, jadi tetap aman dari limit.
 ---
 
 ## Catatan
-- **Nama tidak diulang.** Kalau user putus-sambung berkali-kali dalam 1 interval,
-  namanya tetap dicatat **sekali saja** per daftar (anti-duplikat) — pesan tetap rapi.
-- Kalau 1 user **flap** (putus lalu sambung lagi) dalam interval yang sama, namanya
-  muncul di **UP dan DOWN sekaligus** → itu tanda **koneksinya labil**, layak dicek.
+- **Nama tidak diulang & tidak dobel.** User yang putus-sambung berkali-kali dalam
+  1 interval tetap muncul **sekali**, di posisi **status terakhirnya** (UP kalau
+  sekarang online, DOWN kalau sekarang offline). Pesan tetap rapi.
+- **Mati lampu / gangguan massal:** semua user putus → dikirim **1 pesan** berisi
+  daftar DOWN (mis. `DOWN (395): ...`). Interval berikutnya **tidak ada kejadian
+  baru → tidak kirim apa-apa** (tidak spam terus-menerus). Saat listrik pulih &
+  semua nyambung lagi → dikirim **1 pesan** berisi daftar UP. Jadi hanya dikirim
+  saat ada perubahan.
 - **Jangan kirim password** pelanggan (bocor privasi) — template ini tidak memakainya.
 - SSL error? `/ip dns set servers=1.1.1.1,8.8.8.8` (lihat catatan CA di
   [README Alat 1](../1-notif-profil-pppoe#kalau-ada-masalah)).
