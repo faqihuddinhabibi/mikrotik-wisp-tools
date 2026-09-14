@@ -4,41 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Layanan Diisolir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:linear-gradient(160deg,#fef2f2,#f4f6fb 40%);color:#1c2333;
-    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-  .card{background:#fff;width:100%;max-width:440px;border-radius:20px;padding:32px 26px;
-    box-shadow:0 12px 40px rgba(150,30,30,.12);text-align:center}
-  .logo{width:64px;height:64px;border-radius:16px;margin:0 auto 18px;
-    background:linear-gradient(135deg,#dc2626,#f87171);display:flex;align-items:center;
-    justify-content:center;font-size:30px}
-  h1{font-size:22px;line-height:1.3;margin-bottom:8px}
-  .biz{color:#dc2626;font-weight:700}
-  p.lead{color:#5b6472;font-size:15px;line-height:1.6;margin-bottom:22px}
-  .badge{display:inline-block;background:#fee2e2;color:#b91c1c;font-weight:600;
-    padding:6px 14px;border-radius:999px;font-size:13px;margin-bottom:18px}
-  .btn{display:block;width:100%;padding:15px;border-radius:12px;border:none;font-size:16px;
-    font-weight:700;text-decoration:none;cursor:pointer;margin-bottom:12px}
-  .btn-wa{background:#16a34a;color:#fff}
-  .foot{font-size:12px;color:#5b6472;margin-top:14px;line-height:1.6}
+  :root{
+    --navy:#0a1330;
+    --navy-2:#0d1b45;
+    --red:#ff5a6a;
+    --red-soft:#ffa1ab;
+    --ember:#ff8a3d;
+    --ink:#f4f8ff;
+    --muted:#a8b2cc;
+    --wa:#25d366;
+    --wa-dark:#1eb857;
+    --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{height:100%}
+  body{
+    font-family:var(--font);
+    color:var(--ink);
+    background:
+      radial-gradient(120% 80% at 50% -10%, #5a1630 0%, rgba(90,22,48,0) 55%),
+      radial-gradient(90% 60% at 85% 15%, rgba(255,90,106,.18) 0%, rgba(255,90,106,0) 60%),
+      linear-gradient(180deg, var(--navy-2) 0%, var(--navy) 55%, #060c22 100%);
+    min-height:100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:32px 22px;
+    overflow:hidden;
+  }
+
+  .weave{position:fixed; inset:0; z-index:0; opacity:.3; pointer-events:none}
+  .weave svg{width:100%; height:100%}
+
+  .wrap{
+    position:relative; z-index:1;
+    width:100%; max-width:400px; text-align:center;
+    animation:rise .7s cubic-bezier(.2,.7,.2,1) both;
+  }
+
+  /* badge gembok merah (statis - koneksi terputus) */
+  .signal{position:relative; width:132px; height:132px; margin:0 auto 30px}
+  .signal .ring{
+    position:absolute; inset:0; margin:auto; border-radius:50%;
+    border:1.5px solid var(--red); opacity:.16;
+  }
+  .signal .ring:nth-child(1){transform:scale(1)}
+  .signal .ring:nth-child(2){transform:scale(.72)}
+  .badge{
+    position:absolute; inset:0; margin:auto; width:80px; height:80px; border-radius:26px;
+    background:linear-gradient(145deg, #c62b4a 0%, #ff8a3d 100%);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 12px 34px rgba(255,90,106,.35), inset 0 1px 0 rgba(255,255,255,.4);
+  }
+  .badge svg{width:36px; height:36px; display:block}
+
+  h1{
+    font-size:29px; line-height:1.28; font-weight:800; letter-spacing:-.01em;
+    margin-bottom:16px;
+  }
+  h1 .hl{ color:var(--red); text-shadow:0 0 24px rgba(255,90,106,.45); }
+  p.lead{
+    font-size:16px; line-height:1.65; font-weight:400; color:var(--muted);
+    margin:0 auto 34px; max-width:322px;
+  }
+
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:9px;
+    min-height:48px; padding:0 24px; border-radius:12px;
+    background:linear-gradient(180deg, var(--wa) 0%, var(--wa-dark) 100%);
+    color:#04210f; text-decoration:none; font-size:15px; font-weight:700;
+    box-shadow:0 8px 20px rgba(37,211,102,.28);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px); box-shadow:0 12px 26px rgba(37,211,102,.38)}
+  .btn:active{transform:translateY(0)}
+  .btn:focus-visible{outline:3px solid var(--red-soft); outline-offset:3px}
+  .btn svg{width:18px; height:18px}
+
+  .foot{ margin-top:22px; font-size:13px; color:var(--muted); }
+
+  @keyframes rise{from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none}}
+  @media (prefers-reduced-motion: reduce){ .wrap{animation:none} }
+  @media (max-width:360px){ h1{font-size:25px} p.lead{font-size:15px} }
 </style>
 </head>
 <body>
-  <main class="card">
-    <div class="logo">⛔</div>
-    <h1>Layanan Diisolir Sementara<br><span class="biz">FiberNode Internet</span></h1>
-    <div class="badge">Tagihan belum dibayar</div>
+  <div class="weave" aria-hidden="true">
+    <svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" fill="none">
+      <path d="M-40 120 C120 200 280 40 460 140" stroke="#ff5a6a" stroke-width="1" opacity=".4"/>
+      <path d="M-40 260 C140 340 300 180 470 300" stroke="#ff8a3d" stroke-width="1" opacity=".3"/>
+      <path d="M-40 560 C120 640 300 500 470 620" stroke="#ff5a6a" stroke-width="1" opacity=".28"/>
+    </svg>
+  </div>
+
+  <main class="wrap">
+    <div class="signal" aria-hidden="true">
+      <span class="ring"></span><span class="ring"></span>
+      <div class="badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3a0d10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      </div>
+    </div>
+
+    <h1>Layanan internet<br><span class="hl">dinonaktifkan sementara</span></h1>
+
     <p class="lead">
-      Mohon maaf, layanan internet Anda <b>dinonaktifkan sementara</b> karena
-      tagihan belum diterima. Layanan aktif kembali otomatis setelah pembayaran
-      dikonfirmasi.
+      Halo, layanan internet Anda dinonaktifkan sementara karena tagihan belum diterima. Layanan aktif kembali otomatis setelah pembayaran dikonfirmasi.
     </p>
-    <a class="btn btn-wa" href="https://wa.me/6281234567890?text=Halo%20admin%2C%20saya%20sudah%20bayar%2C%20mohon%20aktifkan%20kembali">
-      💬 Konfirmasi Pembayaran via WhatsApp
+
+    <!-- GANTI: nomor WA (format 62...) -->
+    <a class="btn" href="https://wa.me/6281234567890?text=Halo%20admin%2C%20saya%20sudah%20bayar%2C%20mohon%20aktifkan%20kembali">
+      <svg viewBox="0 0 24 24" fill="#04210f"><path d="M12.04 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.48 1.34 5L2 22l5.2-1.36c1.46.8 3.1 1.22 4.84 1.22 5.5 0 9.96-4.46 9.96-9.96S17.54 2 12.04 2zm5.8 14.06c-.24.68-1.42 1.3-1.96 1.34-.5.06-1.14.08-1.84-.12-.42-.14-.96-.32-1.66-.62-2.92-1.26-4.82-4.2-4.96-4.4-.14-.2-1.2-1.6-1.2-3.04 0-1.44.76-2.14 1.02-2.44.26-.3.58-.38.78-.38.2 0 .38 0 .56.02.18 0 .42-.06.66.5.24.56.82 1.94.9 2.08.08.14.12.3.02.5-.1.2-.14.32-.28.5-.14.16-.3.36-.42.48-.14.14-.28.3-.12.58.16.28.72 1.18 1.54 1.92 1.06.94 1.94 1.24 2.22 1.38.28.14.44.12.6-.08.16-.2.68-.8.86-1.08.18-.28.36-.22.6-.14.24.08 1.56.74 1.82.88.28.14.46.2.52.32.08.12.08.68-.16 1.36z"/></svg>
+      Konfirmasi Pembayaran
     </a>
-    <p class="foot">Setelah konfirmasi, tunggu beberapa menit untuk reaktivasi.</p>
+
+    <div class="foot">Setelah konfirmasi, tunggu beberapa menit untuk reaktivasi</div>
   </main>
 </body>
 </html>
