@@ -141,12 +141,57 @@ Kalau muncul → berhasil. Selanjutnya berjalan otomatis tiap jam.
 
 ---
 
-## Mengubah isi pesan / kecepatan cek
+## Contoh pesan & cara mengubah templatenya
 
-- **Kecepatan cek:** ganti `interval=1h` jadi `interval=5m` (5 menit) di scheduler
-  kalau ingin lebih cepat. Ingat: makin sering = makin banyak kerja router.
-- **Isi pesan:** ubah variabel `teks` di dalam script. Anda bisa menambah info lain
-  (mis. paket, IP) dengan membaca field dari `/ppp secret`.
+**Bentuk pesan bawaan** yang masuk ke Telegram:
+```
+PPPoE profile berubah
+User: budi
+Dari: AKTIF
+Jadi: ISOLIR
+```
+
+**Bagian yang mengatur teks itu** ada di dalam `pppoe-profile-watch.rsc`, di baris ini:
+```rsc
+:local teks ("PPPoE profile berubah\\nUser: " . $nama . \
+             "\\nDari: " . $old . "\\nJadi: " . $prof)
+```
+Aturannya:
+- Tulisan di dalam tanda kutip `"..."` = teks tetap (boleh Anda ganti).
+- `\\n` = ganti baris (enter).
+- `$nama`, `$old`, `$prof` = data yang diisi otomatis (nama user, profil lama, profil baru).
+- Tanda `. ` menyambung potongan teks.
+
+**Contoh mengganti template** — misalnya versi lebih ramah:
+```rsc
+:local teks ("⚠️ Perubahan Profil Pelanggan\\n\\n" . \
+             "Nama   : " . $nama . "\\n" . \
+             "Semula : " . $old . "\\n" . \
+             "Menjadi: " . $prof)
+```
+Hasilnya:
+```
+⚠️ Perubahan Profil Pelanggan
+
+Nama   : budi
+Semula : AKTIF
+Menjadi: ISOLIR
+```
+
+**Data lain yang bisa ditambahkan** (baca dari secret pakai `$s`), contoh:
+```rsc
+:local paket [/ppp secret get $s comment]     ;# isi comment (mis. paket/tanggal)
+:local svc   [/ppp secret get $s service]      ;# tipe layanan (pppoe, dst)
+```
+lalu sisipkan ke `teks`, mis. `. "\\nPaket: " . $paket`.
+
+> Jangan pakai tanda kutip `"` di dalam teks template — itu bisa merusak format
+> pengiriman. Gunakan kata biasa & `\\n` untuk baris baru.
+
+## Mengubah kecepatan cek
+Ganti `interval=1h` jadi `interval=5m` (5 menit) di scheduler kalau ingin lebih
+cepat. Makin sering = makin banyak kerja router (untuk perubahan profil, 1 jam
+biasanya sudah cukup).
 
 ---
 

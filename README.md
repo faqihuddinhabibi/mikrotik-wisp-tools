@@ -15,6 +15,22 @@ yang ingin otomatisasi sederhana tanpa server mahal.
 
 ---
 
+## Tampilan halaman
+
+<p>
+<img src="screenshots/reminder.jpg" width="240" alt="Halaman pengingat tagihan (H-1)">
+&nbsp;&nbsp;
+<img src="screenshots/isolir.jpg" width="240" alt="Halaman isolir">
+</p>
+
+**Lihat langsung (demo):**
+- Reminder H-1 → https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/
+- Isolir → https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/isolir.html
+
+> Nomor WhatsApp & teks bisa Anda ganti sendiri (lihat README tiap folder).
+
+---
+
 ## Isi repo
 
 ```
