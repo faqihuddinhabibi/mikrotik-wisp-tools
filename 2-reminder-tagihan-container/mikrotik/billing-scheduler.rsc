@@ -6,7 +6,7 @@
 #  "tagihan-reminder" -> otomatis kena redirect walled-garden.
 #  (Hari-H sengaja dilewati: yang sudah bayar tidak terganggu.)
 #
-#  Target : RouterOS 7.24.2 (x86)
+#  Target : RouterOS 7.x
 #  Jalan  : scheduler tiap 1 jam (granularitas billing = harian)
 #
 #  Format comment secret (contoh):
@@ -22,9 +22,9 @@
 # --------------------------------------------------------------
 
 # ---- daftar user yang TIDAK pernah direminder ----
-# Cara ini alternatif dari tag "SKIP" di comment: cukup tulis nama
-# persis (sama seperti di /ppp secret), dipisah koma, DIAPIT koma
-# di awal & akhir. Kosongkan (",,") kalau tidak dipakai.
+# Alternatif dari tag "SKIP" di comment: tulis nama persis (sama
+# seperti di /ppp secret), dipisah koma, DIAPIT koma di awal & akhir.
+# Kosongkan (",,") kalau tidak dipakai.
 # Contoh: ",kantor-desa,sekolah-01,puskesmas,"
 :local excludeNames ",,"
 # --------------------------------------------------------------

@@ -1,0 +1,36 @@
+# CI/CD opsional — auto-deploy halaman ke VPS tiap push ke main.
+#
+# CARA PAKAI:
+# 1. Pindahkan file ini ke .github/workflows/deploy-vps.yml di repo
+#    (lewat web GitHub: Add file -> Create new file, paste isinya).
+# 2. Isi Secrets di GitHub: Settings -> Secrets and variables -> Actions:
+#      VPS_HOST     = IP/domain VPS
+#      VPS_USER     = user SSH (mis. root)
+#      VPS_SSH_KEY  = private key SSH (public-nya ada di authorized_keys VPS)
+#      VPS_PATH     = path repo di VPS (mis. /root/mikrotik-wisp-tools)
+# 3. Push ke main -> otomatis deploy.
+name: Deploy ke VPS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs/**"
+      - "3-reminder-tagihan-vps/web/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            git pull
+            cd 3-reminder-tagihan-vps/web
+            docker compose up -d --build

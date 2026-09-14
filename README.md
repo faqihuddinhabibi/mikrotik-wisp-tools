@@ -1,83 +1,104 @@
 # mikrotik-wisp-tools
 
-Kumpulan tools untuk WISP kecil berbasis **PPPoE** di MikroTik, tanpa container,
-100% dikontrol dari **Winbox / terminal RouterOS**.
+Kumpulan alat praktis untuk **WISP / RT-RW Net berbasis PPPoE** di MikroTik —
+**tanpa aplikasi billing berbayar, tanpa langganan, dikontrol dari Winbox**.
 
-## Perangkat & versi (target yang sudah diuji-rancang untuk ini)
+Tiga alat yang saling melengkapi:
 
-| Item | Nilai |
-|------|-------|
-| Hardware | HP ProDesk 600 G5 SFF |
-| CPU | Intel Core i7-9700 |
-| Arsitektur | x86 (RouterOS x86 / CHR) |
-| RouterOS | 7.24.2 |
-| Topologi customer | Tiap rumah punya router sendiri yang **dial PPPoE** ke MikroTik ini |
+1. **Notifikasi Telegram** saat profil pelanggan diubah (mis. diisolir/diaktifkan).
+2. **Reminder tagihan otomatis** — halaman pengingat muncul di HP pelanggan sehari
+   sebelum jatuh tempo (mirip splash page wifi.id).
+3. **Isolir** — blokir pelanggan yang belum bayar + halaman "silakan bayar".
 
-> Karena customer dial PPPoE, **semua trafik mereka lewat interface PPPoE di MikroTik**.
-> Jadi MikroTik tetap bisa melihat & me-redirect trafik HTTP mereka walaupun mereka
-> pakai router sendiri di rumah.
+Berjalan di **RouterOS 7.x** (diuji di perangkat x86). Cocok untuk jaringan kecil
+yang ingin otomatisasi sederhana tanpa server mahal.
+
+---
 
 ## Isi repo
 
-### 📁 [01-pppoe-profile-telegram](01-pppoe-profile-telegram/)
-Kirim notifikasi **Telegram** setiap kali **profile** sebuah user PPPoE berubah
-(misal `aktif` → `isolir`). RouterOS tidak punya event bawaan untuk "profile diedit",
-jadi ini pakai scheduler yang mengecek berkala. Lihat README di dalam folder.
-
-### 📁 [02-reminder-tagihan-walled-garden](02-reminder-tagihan-walled-garden/)
-Saat customer terhubung dan **besok jatuh tempo (H-1)**, trafik HTTP mereka
-di-redirect otomatis ke **halaman pengingat tagihan** (mirip splash page wifi.id).
-Pakai **web-proxy bawaan RouterOS** + **address-list** + **scheduler**. Tanpa container.
-Halaman di-host di **GitHub Pages** (folder [`docs/`](docs/)).
-
-### 📁 [docs](docs/)
-Halaman HTML yang tampil ke customer, di-host lewat GitHub Pages:
-- `index.html` — halaman pengingat tagihan (**H-1 / besok jatuh tempo**), minimalis
-- `isolir.html` — (opsional) halaman "internet diisolir, tagihan belum dibayar"
-
-URL setelah GitHub Pages aktif:
-`https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/`
-
-## Pilihan hosting halaman (3 cara)
-
-Halaman itu file statis — bisa di-host di mana saja. MikroTik hanya redirect ke URL/IP-nya.
-
-| Cara | Folder | Kelebihan | Kekurangan |
-|------|--------|-----------|------------|
-| **GitHub Pages** (default) | `docs/` | Gratis, nol maintenance, update tinggal push | IP GitHub bisa berubah → whitelist isolir rawan basi |
-| **VPS (Docker)** | [`hosting-vps/`](hosting-vps/) | **IP tetap**, bisa dinamis nanti, HTTP langsung | VPS harus online |
-| **MikroTik container** | [`hosting-mikrotik-container/`](hosting-mikrotik-container/) | **Tanpa internet/VPS**, halaman lokal selalu bisa dibuka | Perlu paket container + reboot (risiko di jam produksi) |
-
-**Ringkas untuk isolir** (yang butuh whitelist IP): GitHub rawan (IP bisa berubah);
-**VPS** atau **container** lebih stabil karena IP tetap. Reminder H-1 tidak terpengaruh
-(user internet nyala). Pilih salah satu sesuai kenyamanan.
-
-## Urutan pemasangan yang disarankan
-
-1. Baca & pasang **01** dulu (paling gampang, langsung kelihatan hasilnya di Telegram).
-2. Aktifkan **GitHub Pages** (lihat langkah di README folder 02).
-3. Edit halaman di `docs/` sesuai nama usaha & kontak WA-mu.
-4. Pasang **02** (walled-garden reminder).
-
-## Konvensi comment di `/ppp secret`
-
-Tools ini menyimpan data billing di **comment** tiap secret. Format bebas, yang penting
-ada token `DUE:` diikuti tanggal jatuh tempo (1–28). Contoh comment:
-
 ```
-Budi RT03 - Paket 20Mbps | DUE:15
+mikrotik-wisp-tools/
+├── docs/                          Halaman web (reminder & isolir) — file statis
+│   ├── index.html                 Halaman "jatuh tempo besok" (H-1)
+│   └── isolir.html                Halaman "layanan dinonaktifkan"
+│
+├── 1-notif-profil-pppoe/          ALAT 1 — notif Telegram saat profil berubah
+│   ├── README.md                  (panduan lengkap langkah demi langkah)
+│   └── pppoe-profile-watch.rsc
+│
+├── 2-reminder-tagihan-container/  ALAT 2 & 3 — reminder + isolir, halaman di CONTAINER MikroTik
+│   ├── README.md
+│   ├── mikrotik/                  script RouterOS (walled-garden, scheduler, isolir)
+│   └── web/                       Dockerfile + skrip build image container
+│
+├── 3-reminder-tagihan-vps/        ALAT 2 & 3 — reminder + isolir, halaman di VPS
+│   ├── README.md
+│   ├── mikrotik/                  script RouterOS
+│   └── web/                       Dockerfile, docker-compose, CI/CD
+│
+├── LICENSE
+└── README.md
 ```
 
-Artinya: pelanggan "Budi", jatuh tempo **tanggal 15** tiap bulan.
+> **Reminder & isolir ada dua versi** (folder 2 & 3) — bedanya cuma **di mana
+> halaman web di-host**. Pilih salah satu. Isi fitur MikroTik-nya sama.
 
-- Script **billing** (folder 02) hanya **membaca** `DUE:` dari comment — tidak pernah menimpanya.
-- Script **profile-watch** (folder 01) tidak menyentuh comment sama sekali (state disimpan di RAM).
+---
 
-> Gunakan tanggal **1–28** agar logika H-1 aman di semua bulan (hindari 29/30/31).
+## Pilih cara hosting halaman
 
-Untuk mengecualikan pelanggan dari halaman reminder (mis. instansi yang bayar 3 bulan
-sekali), tambahkan kata **`SKIP`** di comment-nya:
+Halaman reminder/isolir hanya file statis. Ada 3 cara menaruhnya; MikroTik tinggal
+mengarahkan ke URL/IP-nya.
 
-```
-Kantor Desa - bayar per 3 bln SKIP
-```
+| Cara | Folder | Cocok kalau… | Catatan |
+|------|--------|--------------|---------|
+| **VPS (Docker)** | [`3-reminder-tagihan-vps`](3-reminder-tagihan-vps) | Punya server dengan IP tetap | Paling seimbang; IP tetap, gampang update, bisa dinamis nanti |
+| **Container di MikroTik** | [`2-reminder-tagihan-container`](2-reminder-tagihan-container) | Tak mau server/internet luar | Halaman lokal selalu tersedia; perlu paket container + reboot |
+| **GitHub Pages** | `docs/` | Sekadar coba cepat / gratis | Nol maintenance; IP bisa berubah → whitelist isolir rawan basi |
+
+**Untuk fitur isolir** (yang perlu meng-whitelist alamat halaman), **VPS** atau
+**container** lebih andal karena alamatnya tetap.
+
+---
+
+## Mulai dari mana?
+
+1. Pasang **[Alat 1](1-notif-profil-pppoe)** dulu — paling mudah, hasilnya langsung
+   kelihatan di Telegram.
+2. Pilih **Alat 2 (container)** atau **Alat 3 (VPS)** untuk reminder + isolir, lalu
+   ikuti README di folder tersebut dari atas sampai bawah.
+
+Semua panduan ditulis langkah demi langkah untuk pemula.
+
+---
+
+## Konvensi comment `/ppp secret`
+
+Data tagihan disimpan di **comment** tiap pelanggan (bebas formatnya, asal ada
+token berikut):
+
+| Token | Arti | Contoh comment |
+|-------|------|----------------|
+| `DUE:NN` | Tanggal jatuh tempo (pakai **1–28**) | `Budi RT03 - 20Mbps \| DUE:15` |
+| `SKIP` | Jangan pernah tampilkan halaman reminder ke user ini | `Kantor Desa - per 3 bln SKIP` |
+
+- Reminder muncul **H-1** (sehari sebelum `DUE`).
+- Script hanya **membaca** comment, tidak menimpanya.
+
+---
+
+## Batasan penting (baca sebelum pasang)
+
+- **HTTPS tidak bisa dialihkan.** Situs `https://` tidak akan ke-redirect saat
+  dibuka langsung — ini batasan **semua** captive portal (termasuk wifi.id). Yang
+  memunculkan popup adalah **cek-koneksi HTTP** otomatis HP tiap menyambung wifi.
+- Untuk kepastian ekstra, ada opsi notifikasi **Telegram** di script reminder.
+- Pelanggan pakai router sendiri (dial PPPoE)? Tetap jalan — trafik lewat MikroTik.
+
+---
+
+## Lisensi
+
+[MIT](LICENSE) — bebas dipakai, diubah, dan disebarkan. Semoga bermanfaat untuk
+teman-teman WISP/RT-RW Net lain. Kontribusi & saran dipersilakan lewat Issues/PR.

@@ -1,9 +1,9 @@
-# Jalankan dari dalam folder hosting-vps/:  docker compose up -d
+# Jalankan dari folder 3-reminder-tagihan-vps/web/ :  docker compose up -d --build
 services:
   reminder-web:
     build:
-      context: ..                       # root repo (biar Dockerfile bisa COPY docs/)
-      dockerfile: hosting-vps/Dockerfile
+      context: ../..                    # root repo (biar Dockerfile bisa COPY docs/)
+      dockerfile: 3-reminder-tagihan-vps/web/Dockerfile
     image: mikrotik-reminder-web:latest
     container_name: reminder-web
     restart: unless-stopped
