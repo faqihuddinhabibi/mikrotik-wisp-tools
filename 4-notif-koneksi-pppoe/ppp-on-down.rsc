@@ -26,11 +26,12 @@
     :set profil [/ppp secret get $sid profile]
     :local cmt [/ppp secret get $sid comment]
     :local slash [:find $cmt "/"]
-    :local loc $cmt
-    :if ([:typeof $slash] = "num") do={ :set loc [:pick $cmt 0 $slash] }
-    # buang spasi di ujung
-    :while (([:len $loc] > 0) && ([:pick $loc ([:len $loc] - 1) [:len $loc]] = " ")) do={ :set loc [:pick $loc 0 ([:len $loc] - 1)] }
-    :if ([:len $loc] > 0) do={ :set lokasi $loc }
+    # Lokasi = teks sebelum "/". Kalau comment belum ada "/", Lokasi tetap "-".
+    :if ([:typeof $slash] = "num") do={
+        :local loc [:pick $cmt 0 $slash]
+        :while (([:len $loc] > 0) && ([:pick $loc ([:len $loc] - 1) [:len $loc]] = " ")) do={ :set loc [:pick $loc 0 ([:len $loc] - 1)] }
+        :if ([:len $loc] > 0) do={ :set lokasi $loc }
+    }
 }
 
 # hitung yang sedang mati (disconnect) + daftar namanya
@@ -47,7 +48,7 @@
 
 # peringatan bila banyak yang mati
 :local alarm ""
-:if ($mati >= $alarmMati) do={ :set alarm ("⚠️ BANYAK DISCONNECT — cek jaringan/ODP!\\n\\n") }
+:if ($mati >= $alarmMati) do={ :set alarm ("⚠️ BANYAK DISCONNECT\\n\\n") }
 
 # ---- TEMPLATE PESAN (boleh diubah) ----
 :local teks ("❌ TERPUTUS\\n\\n" . $alarm . \

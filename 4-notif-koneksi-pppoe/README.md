@@ -120,7 +120,7 @@ andi, siti, warkop-rt5, budi
 ```
 ❌ TERPUTUS
 
-⚠️ BANYAK DISCONNECT — cek jaringan/ODP!
+⚠️ BANYAK DISCONNECT
 
 PPPoE : budi
 Lokasi : RT03
@@ -132,25 +132,27 @@ andi, siti, warkop-rt5, budi, ...
 ```
 
 **Isinya:** nama PPPoE, lokasi, profile, waktu; lalu **daftar yang sedang disconnect**
-+ jumlahnya. Kalau banyak drop bareng → peringatan gangguan (kemungkinan kabel/ODP,
-bukan cuma 1 pelanggan). Berguna di lapangan.
++ jumlahnya. Kalau banyak drop bareng → muncul peringatan (indikasi gangguan, bukan
+cuma 1 pelanggan). Berguna di lapangan.
 
 ### Dari mana "Lokasi" diambil?
 Dari **comment** `/ppp secret`, bagian **sebelum tanda `/`**. Contoh comment:
 ```
 RT03 / Budi Santoso - DUE:15
 ```
-→ Lokasi = `RT03`. Kalau comment tidak ada `/`, Lokasi menampilkan seluruh comment;
-kalau comment kosong, tampil `-`. (Format comment ini juga dipakai
-[Alat 2/3](../2-reminder-tagihan-container) untuk `DUE:` — aman dipakai bersama.)
+→ Lokasi = `RT03`. **Kalau comment belum diisi format `.../`** (belum di-set lokasi),
+Lokasi otomatis tampil `-` — script tetap jalan normal, tidak error.
+(Format comment ini juga dipakai [Alat 2/3](../2-reminder-tagihan-container) untuk
+`DUE:` — aman dipakai bersama.)
 
-### Ambang alarm
+### Ambang alarm — "muncul kalau berapa yang mati?"
 Di atas script ada:
 ```rsc
 :local alarmMati 5
 ```
-Kalau jumlah disconnect **≥ 5** → muncul peringatan. Ubah angkanya sesuai selera
-(mis. `10`). Set besar sekali (mis. `9999`) untuk mematikan alarm.
+Artinya peringatan `⚠️ BANYAK DISCONNECT` muncul kalau jumlah yang disconnect
+**≥ 5** (bawaan). Ubah angkanya sesuai selera (mis. `10` untuk jaringan besar).
+Set sangat besar (mis. `9999`) untuk **mematikan** alarm.
 
 **Bagian yang mengatur teks** ada di baris `:local teks (...)`.
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
