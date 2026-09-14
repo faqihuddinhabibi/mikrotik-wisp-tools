@@ -1,30 +1,12 @@
-# ============================================================
-#  Kirim Notif Koneksi (batch) -> Telegram
-#  Pasang sebagai /system script, jalankan via scheduler
-#  (mis. tiap 30 detik).
-#
-#  Cara kerja:
-#   - Ambil user yang BARU berubah (dari antrian on-up/on-down).
-#   - Angka "kedip" per user = BERAPA KALI PUTUS (disconnect) dalam
-#     interval ini (1 putus + nyambung dihitung 1).
-#   - Cek STATUS SAAT INI tiap user (online/offline) -> UP / DOWN.
-#   - Tampilkan juga jumlah aktif vs total PPPoE.
-#   - Kirim 1 pesan.
-#
-#   - Antrian kosong -> tidak kirim apa-apa (ringan).
-#   - 1 pesan per interval -> aman dari rate-limit.
-#   - Hanya user yang berubah yang dicek -> tetap ringan.
-# ============================================================
+# Kirim ringkasan koneksi PPPoE -> Telegram (jalankan via scheduler ~30 detik)
 
-# ---- GANTI dua baris ini ----
+# ---- GANTI ----
 :local botToken "ISI_TOKEN_BOT"
 :local chatId   "ISI_CHAT_ID"
-# -----------------------------
+# ---------------
 
 :global pppNotifUp
 :global pppNotifDown
-
-# ambil antrian up & down (terpisah), lalu kosongkan
 :local upq ""
 :local downq ""
 :if ([:typeof $pppNotifUp] != "nothing")   do={ :set upq $pppNotifUp }
@@ -33,10 +15,9 @@
 :set pppNotifDown ""
 
 :if (([:len $upq] > 0) || ([:len $downq] > 0)) do={
-    :local kedip   [:toarray ""]   ;# nama -> jumlah disconnect (kedip)
-    :local changed [:toarray ""]   ;# nama -> 1 (gabungan up+down)
+    :local kedip   [:toarray ""]
+    :local changed [:toarray ""]
 
-    # parse antrian DOWN: hitung kedip + tandai berubah
     :local rest $downq
     :while ([:len $rest] > 0) do={
         :local p [:find $rest ", "]
@@ -49,7 +30,6 @@
             :set ($changed->$nm) 1
         }
     }
-    # parse antrian UP: cukup tandai berubah (tidak menambah kedip)
     :set rest $upq
     :while ([:len $rest] > 0) do={
         :local p [:find $rest ", "]
@@ -58,8 +38,6 @@
         :if ([:len $nm] > 0) do={ :set ($changed->$nm) 1 }
     }
 
-    # kelompokkan per status terkini. Batasi jumlah nama (hindari 4096 char),
-    # sisanya diringkas "… +X lagi". Angka total (nUp/nDown) tetap akurat.
     :local maxList 30
     :local up ""
     :local down ""
@@ -87,15 +65,10 @@
     :local aktif [/ppp active print count]
     :local waktu "$[/system clock get date] $[/system clock get time]"
 
-    # ---- TEMPLATE PESAN (boleh diubah; format HTML Telegram) ----
-    # CATATAN: karena pakai parse_mode HTML (untuk bold), username PPPoE JANGAN
-    # mengandung karakter < > & (bisa bikin SELURUH pesan ditolak Telegram).
-    # Kalau ada, hapus <b>/</b> dan hapus \"parse_mode\":\"HTML\", (jadi teks biasa).
     :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
                  "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
                  "🟢 <b>UP</b> (" . $nUp . "): " . $up . "\\n" . \
                  "🔴 <b>DOWN</b> (" . $nDown . "): " . $down)
-    # ------------------------------------------------------------
 
     :do {
         /tool fetch keep-result=no http-method=post \

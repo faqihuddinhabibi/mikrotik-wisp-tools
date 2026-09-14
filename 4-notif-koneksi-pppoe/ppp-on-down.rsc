@@ -1,14 +1,4 @@
-# ============================================================
-#  On Down — catat pelanggan yang TERPUTUS ke antrian (RINGAN)
-#  Tempel isi file ini ke kolom "On Down" pada /ppp profile.
-#
-#  Script ini SENGAJA tidak mengirim Telegram langsung (biar
-#  tidak kena race saat sesi turun & tidak kena rate-limit).
-#  Pengiriman dilakukan oleh "kirim-notif.rsc" via scheduler.
-#  Setiap kejadian dicatat (dipakai untuk menghitung "berapa kali
-#  kedip" per user).
-# ============================================================
-
+# On Down: catat pelanggan TERPUTUS ke antrian (tanpa kirim)
 :global pppNotifDown
 :if ([:typeof $pppNotifDown] = "nothing") do={ :set pppNotifDown "" }
 :set pppNotifDown ($pppNotifDown . $user . ", ")
