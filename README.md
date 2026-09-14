@@ -53,8 +53,8 @@ mengarahkan ke URL/IP-nya.
 
 | Cara | Folder | Cocok kalau… | Catatan |
 |------|--------|--------------|---------|
-| **VPS (Docker)** | [`3-reminder-tagihan-vps`](3-reminder-tagihan-vps) | Punya server dengan IP tetap | Paling seimbang; IP tetap, gampang update, bisa dinamis nanti |
-| **Container di MikroTik** | [`2-reminder-tagihan-container`](2-reminder-tagihan-container) | Tak mau server/internet luar | Halaman lokal selalu tersedia; perlu paket container + reboot |
+| **VPS (nginx)** | [`3-reminder-tagihan-vps`](3-reminder-tagihan-vps) | Punya server dengan IP tetap | Paling seimbang & **paling ringan**: nginx + 1 folder, update `git pull`. Docker opsional |
+| **Container di MikroTik** | [`2-reminder-tagihan-container`](2-reminder-tagihan-container) | Tak mau server/internet luar | Halaman lokal selalu tersedia; **butuh Docker/OCI + paket container + reboot** |
 | **GitHub Pages** | `docs/` | Sekadar coba cepat / gratis | Nol maintenance; IP bisa berubah → whitelist isolir rawan basi |
 
 **Untuk fitur isolir** (yang perlu meng-whitelist alamat halaman), **VPS** atau

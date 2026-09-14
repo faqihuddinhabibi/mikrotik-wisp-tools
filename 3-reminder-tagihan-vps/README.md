@@ -69,7 +69,8 @@ ke halaman kita → muncul notifikasi "Sign in", persis seperti wifi.id.
 
 ## Yang perlu disiapkan
 
-- **VPS** (contoh: Ubuntu 24.04 LTS) dengan **IP publik**, akses SSH, dan Docker.
+- **VPS** (contoh: Ubuntu 24.04 LTS) dengan **IP publik** & akses SSH.
+  Cukup **nginx** (ringan); Docker **opsional**.
 - Akses **MikroTik** (Winbox), RouterOS 7.x.
 - Profil **isolir** + **pool IP terpisah** untuk isolir (kalau mau pakai fitur isolir).
   Cek pool Anda dengan `/ip pool print`.
@@ -79,48 +80,72 @@ ke halaman kita → muncul notifikasi "Sign in", persis seperti wifi.id.
 
 ## Bagian A — Siapkan halaman di VPS
 
-### A1. Install Docker (kalau belum)
+Halaman ini cuma file statis (2 HTML). **Cara paling sederhana = nginx langsung
+(tanpa Docker).** Docker disediakan sebagai alternatif kalau Anda memang sudah
+terbiasa dengannya.
+
+### Cara 1 (disarankan) — nginx langsung, TANPA Docker
+
+Ringan, tanpa container, tanpa CI/CD. Update cukup `git pull`.
+
 ```bash
+# 1) install nginx + git
 sudo apt update
-sudo apt install -y docker.io docker-compose-plugin
-sudo systemctl enable --now docker
+sudo apt install -y nginx git
+
+# 2) ambil kode ke /opt
+sudo git clone https://github.com/faqihuddinhabibi/mikrotik-wisp-tools.git /opt/mikrotik-wisp-tools
+
+# 3) edit nomor WhatsApp (cari '<!-- GANTI: nomor WA -->')
+sudo nano /opt/mikrotik-wisp-tools/docs/index.html
+sudo nano /opt/mikrotik-wisp-tools/docs/isolir.html
+
+# 4) arahkan nginx ke folder docs
+sudo tee /etc/nginx/sites-available/reminder >/dev/null <<'EOF'
+server {
+    listen 80 default_server;
+    server_name _;
+    root /opt/mikrotik-wisp-tools/docs;
+    index index.html;
+    location / { try_files $uri $uri/ =404; }
+}
+EOF
+sudo ln -sf /etc/nginx/sites-available/reminder /etc/nginx/sites-enabled/reminder
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### A2. Ambil kode & edit halaman
+**Cek:**
 ```bash
-git clone https://github.com/faqihuddinhabibi/mikrotik-wisp-tools.git
-cd mikrotik-wisp-tools
-```
-Edit **nomor WhatsApp** (dan teks bila perlu) di dua file — cari tanda
-`<!-- GANTI: nomor WA -->`:
-- `docs/index.html`  (halaman reminder H-1)
-- `docs/isolir.html` (halaman isolir)
-
-Ganti `6281234567890` dengan nomor admin (format `62...`).
-
-### A3. Jalankan
-```bash
-cd 3-reminder-tagihan-vps/web
-sudo docker compose up -d --build
-```
-
-### A4. Cek
-```bash
-curl -I http://localhost/            # harus 200
-curl -I http://localhost/isolir.html # harus 200
+curl -I http://localhost/             # harus 200
+curl -I http://localhost/isolir.html  # harus 200
 ```
 Dari browser: `http://IP-VPS/` dan `http://IP-VPS/isolir.html`.
 
-> Kalau port 80 VPS sudah dipakai, ubah `docker-compose.yml` baris `ports`
-> jadi `"8080:80"`, dan pakai `IP-VPS:8080` di setting MikroTik nanti.
-
-### A5. (Opsional) Update otomatis tiap ganti halaman
-Lihat [`web/deploy-vps.yml.example`](web/deploy-vps.yml.example) untuk CI/CD
-GitHub Actions (push → auto-deploy ke VPS). Kalau tidak, update manual:
+**Update halaman nanti** (mis. ganti nomor WA / teks):
 ```bash
-cd ~/mikrotik-wisp-tools && git pull
-cd 3-reminder-tagihan-vps/web && sudo docker compose up -d --build
+cd /opt/mikrotik-wisp-tools && sudo git pull
 ```
+Langsung live — tidak perlu restart apa pun (file statis).
+> Kalau Anda mengedit langsung di server (bukan lewat GitHub), cukup edit filenya;
+> perubahan langsung tampil.
+
+---
+
+### Cara 2 (alternatif) — Docker
+
+Kalau lebih suka pakai Docker:
+```bash
+sudo apt install -y docker.io docker-compose-plugin
+git clone https://github.com/faqihuddinhabibi/mikrotik-wisp-tools.git
+cd mikrotik-wisp-tools/3-reminder-tagihan-vps/web
+sudo docker compose up -d --build
+```
+Update: `git pull` lalu `docker compose up -d --build`.
+(CI/CD opsional ada di [`web/deploy-vps.yml.example`](web/deploy-vps.yml.example).)
+
+> Port 80 sudah dipakai? Cara 1: ubah `listen 80` → `listen 8080`. Cara 2: ubah
+> `ports` di `docker-compose.yml` jadi `"8080:80"`. Lalu pakai `IP-VPS:8080` di MikroTik.
 
 ---
 
@@ -242,7 +267,7 @@ yang bayar 3 bulan sekali), ada 2 cara — pilih salah satu:
 | **Isolir** pelanggan | `set [find name=X] profile=ISOLIR` lalu `/ppp active remove [find name=X]` |
 | **Aktifkan lagi** | `set [find name=X] profile=PAKET...` lalu `/ppp active remove [find name=X]` |
 | **Kecualikan** dari reminder | Tambah `SKIP` di comment, atau masukkan nama ke `excludeNames` |
-| **Ganti nomor WA / teks halaman** | Edit `docs/index.html` & `docs/isolir.html`, deploy ulang (Bagian A5) |
+| **Ganti nomor WA / teks halaman** | Edit `docs/index.html` & `docs/isolir.html` di server, atau edit di GitHub lalu `git pull` di VPS (Cara 1) |
 
 ---
 
@@ -288,4 +313,6 @@ yang bayar 3 bulan sekali), ada 2 cara — pilih salah satu:
 # matikan proxy kalau tidak dipakai lagi
 /ip proxy set enabled=no
 ```
-Di VPS: `cd 3-reminder-tagihan-vps/web && sudo docker compose down`.
+Di VPS:
+- Cara 1 (nginx): `sudo rm /etc/nginx/sites-enabled/reminder && sudo systemctl reload nginx`
+- Cara 2 (Docker): `cd 3-reminder-tagihan-vps/web && sudo docker compose down`
