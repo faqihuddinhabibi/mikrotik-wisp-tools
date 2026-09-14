@@ -13,7 +13,11 @@
 # ============================================================
 
 # ---- konfigurasi (SESUAIKAN dengan setup-mu) ----
-# IP/domain VPS tempat halaman di-host:
+# IP/domain VPS tempat halaman di-host.
+# redirectUrl = alamat halaman isolir (ADA path "/isolir.html").
+#   Contoh IP    : "123.45.67.89/isolir.html"
+#   Contoh domain: "billing.domainku.com/isolir.html"
+# pageIp = IP/domain VPS SAJA, TANPA "/". Contoh: "123.45.67.89"
 :local redirectUrl "IP-VPS-ANDA/isolir.html"
 :local pageIp      "IP-VPS-ANDA"
 # Subnet pool profile isolir. Cari dengan: /ip pool print

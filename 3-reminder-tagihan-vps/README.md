@@ -153,12 +153,20 @@ Update: `git pull` lalu `docker compose up -d --build`.
 
 ### B1. Sesuaikan alamat halaman
 Buka [`mikrotik/setup-walled-garden.rsc`](mikrotik/setup-walled-garden.rsc).
-Ganti **IP-VPS-ANDA** (muncul 2×) dengan IP/domain VPS Anda:
+Ganti **IP-VPS-ANDA** dengan IP publik (atau domain) VPS Anda.
+
+**Perhatikan tanda `/`:**
+- `redirectUrl` = alamat halaman → **HARUS ada `/`** di akhir.
+- `dst-host` = host/IP saja → **TANPA `/`**.
+
+Contoh kalau IP VPS Anda `123.45.67.89`:
 ```rsc
-:local redirectUrl "IP-VPS-ANDA/"
+:local redirectUrl "123.45.67.89/"                                   ;# ADA "/"
 ...
-/ip proxy access add comment="wg-allow-vps" dst-host="IP-VPS-ANDA" action=allow
+/ip proxy access add comment="wg-allow-vps" dst-host="123.45.67.89" action=allow  ;# TANPA "/"
 ```
+Pakai domain juga bisa, mis. `redirectUrl "billing.domainku.com/"` dan
+`dst-host="billing.domainku.com"`.
 
 ### B2. Jalankan setup (sekali)
 Upload file ke **Files** MikroTik, lalu di **New Terminal**:
@@ -205,11 +213,18 @@ Tes manual:
 ## Bagian D — Isolir (blokir + halaman)
 
 ### D1. Sesuaikan & jalankan setup
-Buka [`mikrotik/setup-isolir.rsc`](mikrotik/setup-isolir.rsc), sesuaikan:
+Buka [`mikrotik/setup-isolir.rsc`](mikrotik/setup-isolir.rsc), sesuaikan
+(perhatikan `/`: `redirectUrl` ADA path, `pageIp` cuma IP tanpa `/`):
 ```rsc
 :local redirectUrl "IP-VPS-ANDA/isolir.html"
 :local pageIp      "IP-VPS-ANDA"
 :local isolirNet   "10.1.1.0/24"   ;# subnet pool isolir-mu; cek: /ip pool print
+```
+Contoh kalau IP VPS `123.45.67.89`:
+```rsc
+:local redirectUrl "123.45.67.89/isolir.html"
+:local pageIp      "123.45.67.89"
+:local isolirNet   "10.1.1.0/24"
 ```
 > **Cara tahu subnet isolir:** jalankan `/ip pool print`, lihat pool yang dipakai
 > profil isolir. Kalau range-nya `10.1.1.2-10.1.1.254`, subnetnya `10.1.1.0/24`.

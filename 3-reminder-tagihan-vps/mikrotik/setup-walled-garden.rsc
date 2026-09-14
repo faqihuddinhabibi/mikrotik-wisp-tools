@@ -13,6 +13,9 @@
 # ============================================================
 
 # ---- URL halaman reminder (IP/domain VPS). TANPA http:// ----
+# PENTING: tanda "/" di akhir HARUS ada (itu alamat halaman).
+# Contoh IP    : "123.45.67.89/"
+# Contoh domain: "billing.domainku.com/"
 :local redirectUrl "IP-VPS-ANDA/"
 # -------------------------------------------------------------
 
@@ -23,6 +26,7 @@
 # 2) Aturan akses proxy (bersihkan aturan lama milik script ini dulu)
 /ip proxy access remove [find comment~"^wg-"]
 #    a. izinkan host VPS (hindari loop saat follow redirect)
+#       dst-host = IP/domain VPS SAJA, TANPA "/". Contoh: "123.45.67.89"
 /ip proxy access add comment="wg-allow-vps" dst-host="IP-VPS-ANDA" action=allow
 #    b. redirect semua sisanya ke halaman reminder
 /ip proxy access add comment="wg-redirect" action=deny redirect-to=$redirectUrl
