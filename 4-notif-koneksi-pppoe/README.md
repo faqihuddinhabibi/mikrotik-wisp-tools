@@ -132,9 +132,9 @@ andi (5x), warkop (3x)
 - **Ambang "sering putus"**: `:local flapMin 2` di `kirim-notif.rsc` — user dianggap
   "sering putus" kalau putus ≥ segini kali dalam 1 interval. Naikkan (mis. `3`) kalau
   mau lebih ketat.
-- **Batas nama**: `:local maxList 40` di script — kalau nama sangat banyak (mati
+- **Batas nama**: `:local maxList 30` di script — kalau nama sangat banyak (mati
   lampu), daftar dipotong jadi `… +X lagi` (biar tidak lewat batas 4096 karakter
-  Telegram). Nama panjang? turunkan (mis. `30`).
+  Telegram). Jangan dinaikkan: 3 daftar × 40 nama × 30 karakter sudah lewat 4096.
 - **Teks/format**: ubah baris `:local teks (...)`. Pakai HTML (`<b>..</b>` = tebal).
   ⚠️ Username jangan mengandung `< > &` (bisa bikin seluruh pesan ditolak). Kalau ada,
   hapus tag `<b>`/`</b>` dan `\"parse_mode\":\"HTML\",` → jadi teks biasa.
@@ -143,7 +143,7 @@ andi (5x), warkop (3x)
 
 ## Catatan
 - **Mati lampu / gangguan massal**: semua putus → 1 pesan berisi "Masih mati (395):
-  [40 nama] … +355 lagi". Interval berikutnya kalau tidak ada aktivitas → tidak kirim.
+  [30 nama] … +365 lagi". Interval berikutnya kalau tidak ada aktivitas → tidak kirim.
   Saat pulih bertahap, tiap ada yang balik → daftar mengecil.
 - **Tidak spam** → aman dari rate-limit / ban Telegram.
 - **`Aktif: x/total`** akurat untuk jaringan **murni PPPoE**.
