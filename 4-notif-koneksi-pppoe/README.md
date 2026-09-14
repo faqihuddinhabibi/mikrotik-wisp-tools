@@ -119,34 +119,43 @@ Isinya cuma 3 baris — tidak ada token, tidak ada fetch.
 
 ## Contoh pesan & cara ubah template
 
-```
-📡 Update Koneksi
-2026-09-14 22:00:00
+Tampil di Telegram (judul & UP/DOWN **tebal**):
 
-✅ UP (2): budi, andi
-❌ DOWN (1): siti
-```
-- Angka dalam kurung = **jumlah** user di daftar itu.
-- **UP / DOWN = status SAAT INI** (dicek pas kirim). Jadi kalau `budi` sempat putus
-  lalu nyambung lagi sebelum pesan dikirim, dia masuk **UP** (karena sekarang online).
-  Teknisi langsung tahu yang **masih mati** ada di daftar DOWN.
-- Kalau salah satu kosong → tampil `-`. Kalau **dua-duanya** kosong → tidak ada pesan.
+> **Update Koneksi**
+> 2026-09-14 22:00:00
+> Aktif: 116/120
+>
+> 🟢 **UP** (2): budi (5), andi (1)
+> 🔴 **DOWN** (1): siti (3)
+
+Cara baca:
+- **Aktif: 116/120** → jumlah PPPoE **online / total** semua PPPoE. Sekali lihat tahu
+  kesehatan jaringan.
+- Angka di **samping nama** = **berapa kali user itu kedip** (connect/disconnect) dalam
+  interval itu. Mis. `budi (5)` = budi kedip 5×  → koneksinya labil. `andi (1)` = sekali
+  (normal).
+- Angka di **samping UP/DOWN** = jumlah user di daftar itu.
+- **UP / DOWN = status SAAT INI** (dicek pas kirim). Jadi yang **masih mati** ada di
+  daftar DOWN; yang sudah balik ada di UP.
+- Kalau salah satu kosong → `-`. Kalau tidak ada perubahan sama sekali → tidak ada pesan.
 
 **Template** ada di baris `:local teks (...)` dalam [`kirim-notif.rsc`](kirim-notif.rsc).
-- Teks dalam kutip `"..."` = tetap (boleh diganti).
-- `\\n` = ganti baris, `\\n\\n` = baris kosong.
+Pakai **format HTML Telegram** (`parse_mode=HTML`):
+- `<b>...</b>` = tebal. `\\n` = ganti baris, `\\n\\n` = baris kosong.
 - Nilai yang tersedia:
   | Kode | Arti |
   |------|------|
   | `$waktu` | tanggal & jam saat pengiriman |
-  | `$up` | daftar nama yang **sekarang online** (dari yang berubah) |
+  | `$aktif` | jumlah PPPoE yang online sekarang |
+  | `$total` | jumlah total PPPoE (semua secret) |
+  | `$up` | daftar `nama (kedip)` yang **sekarang online** |
   | `$nUp` | jumlah user di daftar UP |
-  | `$down` | daftar nama yang **sekarang offline** (dari yang berubah) |
+  | `$down` | daftar `nama (kedip)` yang **sekarang offline** |
   | `$nDown` | jumlah user di daftar DOWN |
 
-**Contoh ubah** (cuma yang masih mati):
+**Contoh ubah** (cuma yang masih mati + total):
 ```rsc
-:local teks ("❌ DOWN (" . $nDown . "): " . $down)
+:local teks ("🔴 <b>DOWN</b> (" . $nDown . "): " . $down . "\\nAktif: " . $aktif . "/" . $total)
 ```
 
 ---
@@ -161,9 +170,9 @@ pesan per interval, jadi tetap aman dari limit.
 ---
 
 ## Catatan
-- **Nama tidak diulang & tidak dobel.** User yang putus-sambung berkali-kali dalam
-  1 interval tetap muncul **sekali**, di posisi **status terakhirnya** (UP kalau
-  sekarang online, DOWN kalau sekarang offline). Pesan tetap rapi.
+- **Nama muncul sekali + angka kedip.** User yang putus-sambung berkali-kali tetap
+  muncul **sekali**, dengan angka berapa kali dia kedip (mis. `budi (5)`), di posisi
+  **status terkininya** (UP/DOWN). Pesan tetap rapi & langsung kelihatan yang labil.
 - **Mati lampu / gangguan massal:** semua user putus → dikirim **1 pesan** berisi
   daftar DOWN (mis. `DOWN (395): ...`). Interval berikutnya **tidak ada kejadian
   baru → tidak kirim apa-apa** (tidak spam terus-menerus). Saat listrik pulih &
