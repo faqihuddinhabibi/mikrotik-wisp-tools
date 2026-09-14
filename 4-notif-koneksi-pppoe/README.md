@@ -29,7 +29,7 @@ yang harus dicek — tanpa mikir.
 ## Apa gunanya
 - **Tahu siapa yang mati sekarang** → teknisi langsung tahu tujuan.
 - **Tahu siapa yang baru nyala** (pulih) → daftar mati otomatis mengecil.
-- **Deteksi gangguan massal**: banyak nama muncul di "Yang mati" sekaligus.
+- **Deteksi gangguan massal**: banyak nama muncul di "Disconnect" sekaligus.
 
 > Beda dengan [Alat 1](../1-notif-profil-pppoe) (perubahan profil / pelanggan
 > baru-dihapus). Alat 4 fokus **status online/offline**.
@@ -83,27 +83,27 @@ Detail: [README Alat 1](../1-notif-profil-pppoe#langkah-1--buat-bot-telegram).
 
 ## Langkah 3 — Uji coba
 1. Putus 1 user (🪟 PPP → Active Connections → tombol **–**), biarkan mati.
-2. Tunggu ≤ 30 detik → pesan masuk (nama itu ada di "Yang mati").
-3. Biarkan user itu nyambung lagi → pesan berikutnya menampilkannya di "Baru nyala",
-   dan hilang dari "Yang mati".
+2. Tunggu ≤ 30 detik → pesan masuk (nama itu ada di "Disconnect").
+3. Biarkan user itu nyambung lagi → pesan berikutnya menampilkannya di "Terhubung kembali",
+   dan hilang dari "Disconnect".
 4. Tes manual (tanpa nunggu): `/system script run kirim-notif`.
 
 ---
 
 ## Contoh pesan
 
-Di HP (judul, "Baru nyala", "Yang mati" muncul **tebal**):
+Di HP (judul, "Terhubung kembali", "Disconnect" muncul **tebal**):
 
 ```text
 Update Koneksi
 2026-09-14 22:00:00
 Aktif: 116/120
 
-🟢 Baru nyala: budi, andi
-🔴 Yang mati (4): siti, rudi, joko, warkop-rt5
+Terhubung kembali: budi, andi
+Disconnect (4): siti, rudi, joko, warkop-rt5
 ```
-- **Baru nyala** = yang tadinya mati, sekarang balik. Kalau tidak ada → `-`.
-- **Yang mati (4)** = semua yang offline sekarang + jumlahnya.
+- **Terhubung kembali** = yang tadinya mati, sekarang balik. Kalau tidak ada → `-`.
+- **Disconnect (4)** = semua yang offline sekarang + jumlahnya.
 - Kalau daftar tidak berubah → **tidak ada pesan**.
 
 ---
@@ -120,7 +120,7 @@ Aktif: 116/120
 ---
 
 ## Catatan
-- **Mati lampu / gangguan massal**: semua putus → 1 pesan berisi "Yang mati (395):
+- **Mati lampu / gangguan massal**: semua putus → 1 pesan berisi "Disconnect (395):
   [40 nama] … +355 lagi". Interval berikutnya kalau tidak ada perubahan lagi → tidak
   kirim. Saat pulih bertahap, tiap ada yang balik → daftar mengecil.
 - **Tidak spam** → aman dari rate-limit / ban Telegram.
