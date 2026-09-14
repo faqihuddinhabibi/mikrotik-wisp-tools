@@ -32,8 +32,8 @@
 # ---- TEMPLATE PESAN (boleh diubah) ----
 :local teks ("✅ TERHUBUNG\\n\\n" . \
              "PPPoE : " . $nama . "\\n" . \
-             "Waktu : " . $waktu . "\\n" . \
-             "Profile : " . $profil . "\\n\\n" . \
+             "Profile : " . $profil . "\\n" . \
+             "Waktu : " . $waktu . "\\n\\n" . \
              "Disconnect (" . $mati . "):\\n" . $daftar)
 # ---------------------------------------
 

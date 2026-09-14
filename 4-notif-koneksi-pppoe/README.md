@@ -97,8 +97,8 @@ Notif ini dipasang **per profil**. Pasang di profil paket yang dipakai pelanggan
 ✅ TERHUBUNG
 
 PPPoE : budi
-Waktu : 2026-09-14 21:30:11
 Profile : PAKET100
+Waktu : 2026-09-14 21:30:11
 
 Disconnect (3):
 andi, siti, warkop-rt5
@@ -108,8 +108,8 @@ andi, siti, warkop-rt5
 ❌ TERPUTUS
 
 PPPoE : budi
-Waktu : 2026-09-14 21:30:11
 Profile : PAKET100
+Waktu : 2026-09-14 21:30:11
 
 Disconnect (4):
 andi, siti, warkop-rt5, budi
