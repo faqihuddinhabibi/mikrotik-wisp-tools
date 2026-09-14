@@ -1,0 +1,11 @@
+# Jalankan dari dalam folder hosting-vps/:  docker compose up -d
+services:
+  reminder-web:
+    build:
+      context: ..                       # root repo (biar Dockerfile bisa COPY docs/)
+      dockerfile: hosting-vps/Dockerfile
+    image: mikrotik-reminder-web:latest
+    container_name: reminder-web
+    restart: unless-stopped
+    ports:
+      - "80:80"                         # ganti ke "8080:80" kalau port 80 VPS sudah dipakai

@@ -1,0 +1,40 @@
+# CI/CD opsional — auto-deploy halaman ke VPS tiap push ke main.
+# Aktifkan dengan mengisi Secrets: VPS_HOST, VPS_USER, VPS_SSH_KEY, VPS_PATH
+# (lihat hosting-vps/README.md). Kalau Secrets kosong, workflow ini tidak jalan.
+name: Deploy ke VPS
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs/**"
+      - "hosting-vps/**"
+      - ".github/workflows/deploy-vps.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cek Secrets tersedia
+        id: guard
+        run: |
+          if [ -z "${{ secrets.VPS_HOST }}" ]; then
+            echo "VPS_HOST belum diisi — lewati deploy."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy via SSH
+        if: steps.guard.outputs.ready == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd ${{ secrets.VPS_PATH }}
+            git pull
+            cd hosting-vps
+            docker compose up -d --build

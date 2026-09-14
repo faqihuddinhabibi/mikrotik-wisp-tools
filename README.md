@@ -38,6 +38,20 @@ Halaman HTML yang tampil ke customer, di-host lewat GitHub Pages:
 URL setelah GitHub Pages aktif:
 `https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/`
 
+## Pilihan hosting halaman (3 cara)
+
+Halaman itu file statis — bisa di-host di mana saja. MikroTik hanya redirect ke URL/IP-nya.
+
+| Cara | Folder | Kelebihan | Kekurangan |
+|------|--------|-----------|------------|
+| **GitHub Pages** (default) | `docs/` | Gratis, nol maintenance, update tinggal push | IP GitHub bisa berubah → whitelist isolir rawan basi |
+| **VPS (Docker)** | [`hosting-vps/`](hosting-vps/) | **IP tetap**, bisa dinamis nanti, HTTP langsung | VPS harus online |
+| **MikroTik container** | [`hosting-mikrotik-container/`](hosting-mikrotik-container/) | **Tanpa internet/VPS**, halaman lokal selalu bisa dibuka | Perlu paket container + reboot (risiko di jam produksi) |
+
+**Ringkas untuk isolir** (yang butuh whitelist IP): GitHub rawan (IP bisa berubah);
+**VPS** atau **container** lebih stabil karena IP tetap. Reminder H-1 tidak terpengaruh
+(user internet nyala). Pilih salah satu sesuai kenyamanan.
+
 ## Urutan pemasangan yang disarankan
 
 1. Baca & pasang **01** dulu (paling gampang, langsung kelihatan hasilnya di Telegram).
