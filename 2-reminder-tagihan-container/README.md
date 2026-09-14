@@ -235,9 +235,25 @@ container halaman (`172.17.0.2`).
 > jembatan ini — **bukan** IP router/server Anda yang asli, bukan IP publik, bukan IP
 > pelanggan. Keduanya hanya hidup **di dalam** router (subnet baru `172.17.0.0/24`).
 > `172.17.0.1` = sisi router, `172.17.0.2` = sisi container (tempat halaman).
-> Range `172.17.0.x` dipilih karena umumnya tidak dipakai jaringan lain — kalau
-> ternyata sudah Anda pakai, ganti ke subnet privat lain (mis. `172.20.0.0/24`) dan
-> sesuaikan `redirectUrl`/`pageIp` di script isolir ke alamat `.2`-nya.
+> Range `172.17.0.x` dipilih karena umumnya tidak dipakai jaringan lain.
+
+**Cek dulu apakah `172.17.0.x` sudah dipakai** (🪟 New Terminal):
+```rsc
+/ip address print
+/ip route print where dst-address~"172.17"
+```
+Kalau tidak ada baris `172.17.x` → **aman**, lanjut. Kalau ada → ganti subnet
+(lihat di bawah). (Padanan GUI: **IP → Addresses** dan **IP → Routes**.)
+
+**Kalau perlu ganti subnet** (contoh ke `172.20.0.0/24`), ubah di 3 tempat —
+konsisten: router = `.1`, container = `.2`:
+| # | Tempat | Ganti jadi |
+|---|--------|-----------|
+| 1 | perintah A6 di bawah | `veth address=172.20.0.2/24 gateway=172.20.0.1` & `ip address 172.20.0.1/24` |
+| 2 | `mikrotik/setup-walled-garden.rsc` | `redirectUrl "172.20.0.2/"` |
+| 3 | `mikrotik/setup-isolir.rsc` | `redirectUrl "172.20.0.2/isolir.html"` & `pageIp "172.20.0.2"` |
+
+Alamat tes di A7 juga ikut jadi `http://172.20.0.2/`.
 
 Cara paling pasti: 🪟 Winbox → **New Terminal**, tempel 4 baris ini sekaligus:
 ```rsc
