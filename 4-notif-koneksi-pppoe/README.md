@@ -174,12 +174,19 @@ pesan per interval, jadi tetap aman dari limit.
   muncul **sekali**, dengan angka berapa kali dia kedip (mis. `budi (5)`), di posisi
   **status terkininya** (UP/DOWN). Pesan tetap rapi & langsung kelihatan yang labil.
 - **Batas panjang pesan (penting).** Telegram membatasi **4096 karakter/pesan**.
-  Kalau nama sangat banyak (mis. mati lampu, ratusan putus sekaligus), daftar
-  dipotong otomatis: ditampilkan maksimal **40 nama**, sisanya diringkas
-  `… +355 lagi`. Angka total `(395)` tetap akurat, dan pesan tidak ditolak Telegram.
-  Ubah batas di `kirim-notif.rsc`: `:local maxList 40`.
+  Nama PPPoE bisa panjang (20–30 karakter), jadi daftar dipotong otomatis:
+  maksimal **30 nama** per daftar, sisanya diringkas `… +355 lagi`. Angka total
+  `(395)` tetap akurat, pesan tidak ditolak. Ubah batas di `kirim-notif.rsc`:
+  `:local maxList 30` (jangan terlalu besar kalau nama panjang).
+- **Karakter khusus di username (penting).** Karena pesan pakai format **HTML**
+  (untuk bold), username PPPoE **jangan mengandung `<`, `>`, atau `&`** — kalau ada
+  **1 saja**, Telegram menolak **seluruh** pesan (notif jadi tidak terkirim).
+  Username normal (huruf, angka, `. _ -`) aman. Kalau terpaksa ada karakter itu,
+  matikan format: di `kirim-notif.rsc` hapus tag `<b>`/`</b>` dan hapus
+  `\"parse_mode\":\"HTML\",` pada baris `http-data` (pesan jadi teks biasa, tapi
+  kebal karakter khusus).
 - **Mati lampu / gangguan massal:** semua user putus → dikirim **1 pesan**, mis.
-  `🔴 DOWN (395): budi (1), siti (1), … +355 lagi`. Interval berikutnya **tidak ada
+  `🔴 DOWN (395): budi (1), siti (1), … +365 lagi`. Interval berikutnya **tidak ada
   kejadian baru → tidak kirim apa-apa** (tidak spam). Saat listrik pulih & semua
   nyambung → **1 pesan** daftar UP. Jadi hanya dikirim saat ada perubahan.
 - **Jangan kirim password** pelanggan (bocor privasi) — template ini tidak memakainya.

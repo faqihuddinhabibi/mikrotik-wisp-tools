@@ -55,7 +55,7 @@
     # kelompokkan per status terkini, sertakan jumlah kedip.
     # Batasi jumlah nama yang ditulis (hindari batas 4096 karakter Telegram);
     # sisanya diringkas jadi "… +X lagi". Angka total (nUp/nDown) tetap akurat.
-    :local maxList 40
+    :local maxList 30
     :local up ""
     :local down ""
     :local nUp 0
@@ -81,6 +81,10 @@
     :local waktu "$[/system clock get date] $[/system clock get time]"
 
     # ---- TEMPLATE PESAN (boleh diubah; pakai format HTML Telegram) ----
+    # CATATAN: karena pakai parse_mode HTML (untuk bold), username PPPoE JANGAN
+    # mengandung karakter < > & (bisa bikin SELURUH pesan ditolak Telegram).
+    # Kalau ada username begitu, matikan format: hapus <b> & </b> di bawah, dan
+    # hapus bagian \"parse_mode\":\"HTML\", pada http-data (jadi teks biasa).
     :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
                  "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
                  "🟢 <b>UP</b> (" . $nUp . "): " . $up . "\\n" . \
