@@ -151,26 +151,49 @@ tambahkan di **`/ppp profile`** (profile normal mereka), field **On Up**:
 
 ---
 
-## Opsional: Isolir (blokir total + halaman "belum bayar")
+## Isolir (blokir total + halaman "belum bayar")
 
-Kalau lewat jatuh tempo dan belum bayar, kamu bisa **isolir**:
-1. Buat profile `isolir` dengan **pool IP terpisah**, misal `10.66.0.0/16`.
-2. Pindahkan user telat ke profile `isolir` (manual atau script).
-3. Redirect subnet isolir ke halaman `isolir.html` — karena subnet terpisah,
-   web-proxy bisa membedakannya:
+Untuk router **DISTRIBUSI MUSUK** sudah ada semua bahannya:
+profile **`ISOLIR`** dengan pool **`10.1.1.0/24`** (10.1.1.2–10.1.1.254).
+Tinggal jalankan **`setup-isolir.rsc`** (sekali), lalu isolir user cukup dengan
+mengubah profile-nya jadi `ISOLIR`.
+
+### Pasang
+1. Buka [`setup-isolir.rsc`](setup-isolir.rsc), pastikan `redirectUrl` & `isolirNet`
+   (`10.1.1.0/24`) benar.
+2. Import / paste di terminal:
    ```rsc
-   /ip proxy access add comment="wg-isolir" src-address=10.66.0.0/16 action=deny \
-       redirect-to="faqihuddinhabibi.github.io/mikrotik-wisp-tools/isolir.html"
-   /ip firewall nat add chain=dstnat action=redirect to-ports=8080 protocol=tcp dst-port=80 \
-       src-address=10.66.0.0/16 comment="wg-isolir-redirect"
-   # blokir internet selain DNS + github (halaman):
-   /ip firewall filter add chain=forward src-address=10.66.0.0/16 protocol=udp dst-port=53 action=accept
-   /ip firewall filter add chain=forward src-address=10.66.0.0/16 dst-address-list=github-pages action=accept
-   /ip firewall filter add chain=forward src-address=10.66.0.0/16 action=drop
+   /import file-name=setup-isolir.rsc
    ```
-   (Isi `github-pages` address-list dengan IP `*.github.io` via resolve, atau izinkan port 80/443 ke semua bila cukup.)
+   Script akan: nyalakan web-proxy, redirect HTTP subnet isolir → `isolir.html`,
+   dan **blokir** internet subnet isolir kecuali DNS + halaman.
 
-Ini di luar cakupan default (kamu memilih hanya "redirect halaman"), jadi disediakan sebagai catatan.
+### Cara isolir & reaktivasi (teknisi)
+```rsc
+# isolir user (belum bayar):
+/ppp secret set [find name=budi] profile=ISOLIR
+/ppp active remove [find name=budi]     ;# putus paksa biar reconnect pakai profile baru
+
+# aktifkan lagi (sudah bayar):
+/ppp secret set [find name=budi] profile=PAKET100
+/ppp active remove [find name=budi]
+```
+Setelah reconnect, user isolir dapat IP `10.1.1.x` → semua HTTP → halaman isolir,
+internet lain diblok. Balikin profile → normal lagi otomatis.
+
+### Kapan halaman isolir muncul?
+Terus-menerus **selama** profile user = `ISOLIR`, tiap konek/tiap probe HTTP.
+Beda dengan reminder H-1 (yang cuma sehari & internet tetap nyala).
+
+### Catatan
+- **Font halaman isolir**: karena internet diblok (kecuali github), Google Fonts
+  tidak ikut termuat → halaman pakai font sistem (fallback). Tampilan tetap rapi.
+- **IP GitHub Pages** (`185.199.108–111.153`) di-whitelist di `ALLOW-ISOLIR`.
+  Kalau suatu saat GitHub ganti IP dan halaman tak terbuka, update list itu.
+- **Kalau juga memakai reminder** (`setup-walled-garden.rsc`): jalankan
+  `setup-isolir.rsc` **setelahnya**, lalu di `/ip proxy access` pastikan aturan
+  `iso-redirect` berada **di atas** `wg-redirect` (drag di Winbox) — karena
+  `iso-redirect` lebih spesifik (per-subnet).
 
 ---
 
@@ -188,10 +211,19 @@ Ini di luar cakupan default (kamu memilih hanya "redirect halaman"), jadi disedi
 
 ## Uninstall
 ```rsc
+# reminder
 /system scheduler remove [find name=billing-scheduler]
 /system script remove [find name=billing-scheduler]
 /ip firewall nat remove [find comment~"^wg-"]
 /ip proxy access remove [find comment~"^wg-"]
 /ip firewall address-list remove [find list="tagihan-reminder"]
+
+# isolir
+/ip firewall nat remove [find comment~"^iso-"]
+/ip firewall filter remove [find comment~"^iso-"]
+/ip proxy access remove [find comment~"^iso-"]
+/ip firewall address-list remove [find list="ALLOW-ISOLIR"]
+
+# matikan proxy kalau tidak dipakai lagi keduanya
 /ip proxy set enabled=no
 ```
