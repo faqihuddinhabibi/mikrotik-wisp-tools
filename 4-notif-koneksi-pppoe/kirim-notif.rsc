@@ -13,7 +13,10 @@
 
 # kumpulan nama yang AKTIF sekarang
 :local activeSet [:toarray ""]
-:foreach a in=[/ppp active find] do={ :set ($activeSet->[/ppp active get $a name]) 1 }
+:foreach a in=[/ppp active find] do={
+    :local an [/ppp active get $a name]
+    :set ($activeSet->$an) 1
+}
 
 # kumpulan yang OFFLINE sekarang
 :local offNow [:toarray ""]
