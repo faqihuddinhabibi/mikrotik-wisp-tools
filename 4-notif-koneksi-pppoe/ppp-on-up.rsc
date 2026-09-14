@@ -5,8 +5,11 @@
 #  Script ini SENGAJA tidak mengirim Telegram langsung (biar
 #  tidak kena race saat sesi naik/turun & tidak kena rate-limit).
 #  Pengiriman dilakukan oleh "kirim-notif.rsc" via scheduler.
+#  Anti-duplikat: nama sama tidak dicatat 2x dalam 1 interval.
 # ============================================================
 
 :global pppNotifUp
 :if ([:typeof $pppNotifUp] = "nothing") do={ :set pppNotifUp "" }
-:set pppNotifUp ($pppNotifUp . $user . ", ")
+:if ([:typeof [:find $pppNotifUp ($user . ", ")]] = "nothing") do={
+    :set pppNotifUp ($pppNotifUp . $user . ", ")
+}

@@ -152,8 +152,10 @@ pesan per interval, jadi tetap aman dari limit.
 ---
 
 ## Catatan
-- Kalau 1 user **flap** (putus-sambung) dalam 1 interval, namanya bisa muncul di UP
-  **dan** DOWN sekaligus pada pesan itu — wajar.
+- **Nama tidak diulang.** Kalau user putus-sambung berkali-kali dalam 1 interval,
+  namanya tetap dicatat **sekali saja** per daftar (anti-duplikat) — pesan tetap rapi.
+- Kalau 1 user **flap** (putus lalu sambung lagi) dalam interval yang sama, namanya
+  muncul di **UP dan DOWN sekaligus** → itu tanda **koneksinya labil**, layak dicek.
 - **Jangan kirim password** pelanggan (bocor privasi) — template ini tidak memakainya.
 - SSL error? `/ip dns set servers=1.1.1.1,8.8.8.8` (lihat catatan CA di
   [README Alat 1](../1-notif-profil-pppoe#kalau-ada-masalah)).
