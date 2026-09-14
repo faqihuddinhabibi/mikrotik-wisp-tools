@@ -99,8 +99,11 @@ Update Koneksi
 2026-09-14 22:00:00
 Aktif: 116/120
 
-Terhubung kembali: budi, andi
-Disconnect (4): siti, rudi, joko, warkop-rt5
+Terhubung kembali:
+budi, andi
+
+Disconnect (4):
+siti, rudi, joko, warkop-rt5
 ```
 - **Terhubung kembali** = yang tadinya mati, sekarang balik. Kalau tidak ada → `-`.
 - **Disconnect (4)** = semua yang offline sekarang + jumlahnya.

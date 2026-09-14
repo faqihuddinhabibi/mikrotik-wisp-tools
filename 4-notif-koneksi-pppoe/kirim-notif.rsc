@@ -62,8 +62,8 @@
 
         :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
                      "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
-                     "<b>Terhubung kembali</b>: " . $recovered . "\\n" . \
-                     "<b>Disconnect</b> (" . $nMati . "): " . $mati)
+                     "<b>Terhubung kembali</b>:\\n" . $recovered . "\\n\\n" . \
+                     "<b>Disconnect</b> (" . $nMati . "):\\n" . $mati)
 
         :do {
             /tool fetch keep-result=no http-method=post \
