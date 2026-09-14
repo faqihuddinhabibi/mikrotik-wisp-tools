@@ -1,14 +1,16 @@
-# 4 · Notifikasi Koneksi PPPoE (Siapa yang Mati) → Telegram
+# 4 · Notifikasi Koneksi PPPoE → Telegram
 
-Kirim ke Telegram **daftar pelanggan yang sedang mati** (offline) + **siapa yang baru
-nyala**, hanya **saat ada perubahan**. Buat teknisi: sekali lihat langsung tahu siapa
-yang harus dicek — tanpa mikir.
+Kirim ke Telegram, tiap ~30 detik (hanya saat ada aktivitas):
+- **Terhubung kembali** — yang tadinya mati, sekarang balik.
+- **Masih mati** — yang offline sekarang.
+- **Sering putus** — yang flap (putus berkali-kali) → tanda wifi/kabel bermasalah.
 
-> **Kenapa model "snapshot", bukan kirim per-kejadian?**
-> Kirim Telegram langsung dari event (`on-down`) tidak andal (sering gagal saat sesi
-> putus) dan gampang kena rate-limit / **ban** kalau banyak trouble. Model ini kirim
-> **maksimal 1 pesan per interval, hanya saat daftar berubah** → aman & reliable.
-> Bonus: **tidak perlu utak-atik profil** (tidak ada on-up/on-down) — 1 script saja.
+> **Kenapa modelnya begini?**
+> - **on-down cuma MENGHITUNG** tiap putus (tanpa kirim) → menangkap **semua** flap
+>   (termasuk yang cepat), tanpa race & tanpa spam.
+> - **scheduler** yang mengirim, **1 pesan per interval, hanya saat ada aktivitas** →
+>   reliable & **aman dari rate-limit / ban**.
+> Gabungan: catat setiap kejadian, kirim kumulatif.
 
 ---
 
@@ -29,7 +31,7 @@ yang harus dicek — tanpa mikir.
 ## Apa gunanya
 - **Tahu siapa yang mati sekarang** → teknisi langsung tahu tujuan.
 - **Tahu siapa yang baru nyala** (pulih) → daftar mati otomatis mengecil.
-- **Deteksi gangguan massal**: banyak nama muncul di "Disconnect" sekaligus.
+- **Deteksi gangguan massal**: banyak nama muncul di "Masih mati" sekaligus.
 
 > Beda dengan [Alat 1](../1-notif-profil-pppoe) (perubahan profil / pelanggan
 > baru-dihapus). Alat 4 fokus **status online/offline**.
@@ -39,17 +41,19 @@ yang harus dicek — tanpa mikir.
 ## Bagaimana cara kerjanya
 
 ```
+Tiap pelanggan PUTUS  → On Down: tambah +1 hitungan flap-nya (di memori, tanpa kirim)
+
 Scheduler tiap ~30 detik jalankan "kirim-notif":
-   - cek siapa yang OFFLINE sekarang (snapshot)
-   - bandingkan dengan snapshot sebelumnya
-        - ada yang baru mati / baru nyala?  -> kirim 1 pesan
-        - daftar sama persis?               -> tidak kirim apa-apa
+   - baca & reset hitungan flap (siapa yang sering putus)
+   - snapshot: siapa yang offline sekarang, bandingkan dgn sebelumnya (untuk "terhubung kembali")
+   - ada aktivitas (ada yang berubah / ada yang flap)? -> kirim 1 pesan
+   - tidak ada apa-apa? -> tidak kirim
 ```
 
-- **Hanya kirim saat berubah** → tidak spam → aman dari rate-limit / ban.
-- **Reliable**: jalan di konteks scheduler (bukan sesi yang putus).
-- **Tidak perlu on-up/on-down** di profil → pemasangan simpel, dan tidak ada
-  error "executing script from ppp" di interface uplink.
+- **on-down cuma `:set` counter** (tanpa fetch, tanpa lookup) → **tidak kena race**
+  saat sesi putus & **aman dipasang di profil manapun** (tidak error di uplink).
+- **Kirim 1 pesan per interval** → tidak spam → **aman dari rate-limit / ban**.
+- Flap (putus cepat) **tetap tercatat** karena dihitung saat kejadian, bukan saat cek.
 
 ---
 
@@ -69,12 +73,18 @@ Detail: [README Alat 1](../1-notif-profil-pppoe#langkah-1--buat-bot-telegram).
 
 ## Langkah 2 — Pasang script + scheduler
 
-**Cuma 1 script, tanpa menyentuh profil.**
+### 2a. Pasang penghitung flap (On Down)
+Isi [`ppp-on-down.rsc`](ppp-on-down.rsc) ke kolom **On Down** tiap **profil pelanggan**:
+1. 🪟 Winbox → **PPP → Profiles** → double-click profil (mis. `PAKET100`).
+2. Kolom **On Down** → tempel isi `ppp-on-down.rsc` → **OK**. Ulangi tiap profil paket.
 
+> Isinya cuma `:set` counter — tanpa fetch, tanpa lookup → **tidak akan error**
+> (walau kepasang di profil uplink sekalipun). Tidak perlu On Up.
+
+### 2b. Pasang pengirim (scheduler)
 1. 🖥️ Buka [`kirim-notif.rsc`](kirim-notif.rsc), ganti `ISI_TOKEN_BOT` & `ISI_CHAT_ID`.
-2. 🪟 Winbox → **System → Scripts → Add (+)**. **Name:** `kirim-notif`, tempel isinya
-   ke **Source** → **OK** (policy: centang semua / minimal read + test).
-3. 🪟 Winbox → **New Terminal**, pasang scheduler (1 baris):
+2. 🪟 **System → Scripts → Add (+)**. **Name:** `kirim-notif`, tempel ke **Source** → **OK**.
+3. 🪟 **New Terminal**, pasang scheduler (1 baris):
    ```rsc
    /system scheduler add name=kirim-notif interval=30s on-event="/system script run kirim-notif" comment="Notif koneksi PPPoE"
    ```
@@ -83,36 +93,45 @@ Detail: [README Alat 1](../1-notif-profil-pppoe#langkah-1--buat-bot-telegram).
 
 ## Langkah 3 — Uji coba
 1. Putus 1 user (🪟 PPP → Active Connections → tombol **–**), biarkan mati.
-2. Tunggu ≤ 30 detik → pesan masuk (nama itu ada di "Disconnect").
+2. Tunggu ≤ 30 detik → pesan masuk (nama itu ada di "Masih mati").
 3. Biarkan user itu nyambung lagi → pesan berikutnya menampilkannya di "Terhubung kembali",
-   dan hilang dari "Disconnect".
-4. Tes manual (tanpa nunggu): `/system script run kirim-notif`.
+   dan hilang dari "Masih mati".
+4. Putus-sambung 1 user beberapa kali cepat → muncul di "Sering putus (Nx)".
+5. Tes manual (tanpa nunggu): `/system script run kirim-notif`.
 
 ---
 
 ## Contoh pesan
 
-Di HP (judul, "Terhubung kembali", "Disconnect" muncul **tebal**):
+Di HP (judul & label "Terhubung kembali" / "Masih mati" / "Sering putus" **tebal**):
 
 ```text
 Update Koneksi
-2026-09-14 22:00:00
+2026-09-15 22:00:00
 Aktif: 116/120
 
 Terhubung kembali:
-budi, andi
+budi
 
-Disconnect (4):
-siti, rudi, joko, warkop-rt5
+Masih mati (3):
+siti, rudi, joko
+
+Sering putus (30 dtk):
+andi (5x), warkop (3x)
 ```
-- **Terhubung kembali** = yang tadinya mati, sekarang balik. Kalau tidak ada → `-`.
-- **Disconnect (4)** = semua yang offline sekarang + jumlahnya.
-- Kalau daftar tidak berubah → **tidak ada pesan**.
+- **Terhubung kembali** = tadinya mati, sekarang balik. Kalau tidak ada → `-`.
+- **Masih mati (3)** = yang offline sekarang + jumlahnya.
+- **Sering putus** = yang putus **≥ 2×** dalam 30 detik (flap) + berapa kali → tanda
+  wifi/kabel bermasalah. Kalau tidak ada → `-`.
+- Kalau tidak ada aktivitas apa pun → **tidak ada pesan**.
 
 ---
 
 ## Atur & kustomisasi
 - **Interval**: ganti `interval=30s` (mis. `1m` lebih jarang, `20s` lebih cepat).
+- **Ambang "sering putus"**: `:local flapMin 2` di `kirim-notif.rsc` — user dianggap
+  "sering putus" kalau putus ≥ segini kali dalam 1 interval. Naikkan (mis. `3`) kalau
+  mau lebih ketat.
 - **Batas nama**: `:local maxList 40` di script — kalau nama sangat banyak (mati
   lampu), daftar dipotong jadi `… +X lagi` (biar tidak lewat batas 4096 karakter
   Telegram). Nama panjang? turunkan (mis. `30`).
@@ -123,12 +142,12 @@ siti, rudi, joko, warkop-rt5
 ---
 
 ## Catatan
-- **Mati lampu / gangguan massal**: semua putus → 1 pesan berisi "Disconnect (395):
-  [40 nama] … +355 lagi". Interval berikutnya kalau tidak ada perubahan lagi → tidak
-  kirim. Saat pulih bertahap, tiap ada yang balik → daftar mengecil.
+- **Mati lampu / gangguan massal**: semua putus → 1 pesan berisi "Masih mati (395):
+  [40 nama] … +355 lagi". Interval berikutnya kalau tidak ada aktivitas → tidak kirim.
+  Saat pulih bertahap, tiap ada yang balik → daftar mengecil.
 - **Tidak spam** → aman dari rate-limit / ban Telegram.
 - **`Aktif: x/total`** akurat untuk jaringan **murni PPPoE**.
-- State disimpan di RAM (`pppOfflinePrev`). Setelah reboot, run pertama hanya
+- State di RAM (`pppOfflinePrev`, `pppFlap`). Setelah reboot, run pertama hanya
   mencatat kondisi (tidak kirim), lalu normal.
 
 ---
@@ -138,4 +157,6 @@ siti, rudi, joko, warkop-rt5
 /system scheduler remove [find name=kirim-notif]
 /system script remove [find name=kirim-notif]
 :global pppOfflinePrev; :set pppOfflinePrev
+:global pppFlap; :set pppFlap
 ```
+Lalu 🪟 PPP → Profiles → kosongkan kolom **On Down** tiap profil pelanggan.
