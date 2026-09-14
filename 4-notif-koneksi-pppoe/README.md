@@ -119,14 +119,17 @@ Isinya cuma 3 baris — tidak ada token, tidak ada fetch.
 
 ## Contoh pesan & cara ubah template
 
-Tampil di Telegram (judul & UP/DOWN **tebal**):
+Tampil di Telegram seperti ini (di HP, **Update Koneksi**, **UP**, dan **DOWN**
+muncul tebal):
 
-> **Update Koneksi**
-> 2026-09-14 22:00:00
-> Aktif: 116/120
->
-> 🟢 **UP** (2): budi (5), andi (1)
-> 🔴 **DOWN** (1): siti (3)
+```text
+Update Koneksi
+2026-09-14 22:00:00
+Aktif: 116/120
+
+🟢 UP (2): budi (5), andi (1)
+🔴 DOWN (1): siti (3)
+```
 
 Cara baca:
 - **Aktif: 116/120** → jumlah PPPoE **online / total** semua PPPoE. Sekali lihat tahu
