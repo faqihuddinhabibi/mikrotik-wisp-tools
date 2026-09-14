@@ -174,13 +174,13 @@ Ini menyalakan web-proxy dan menyiapkan aturan pengalihan.
 Sistem tahu kapan jatuh tempo pelanggan dari **comment** di `/ppp secret`.
 Tambahkan `DUE:` diikuti **tanggal** (pakai 1–28).
 
-Di **PPP → Secrets**, klik pelanggan, isi **Comment**, contoh:
-```
-Budi RT03 - 20Mbps | DUE:15
-```
+**Lewat Winbox (disarankan):**
+1. **PPP → Secrets** → **double-click** pelanggan.
+2. Isi kolom **Comment**, contoh: `Budi RT03 - 20Mbps | DUE:15` → **OK**.
+
 Artinya jatuh tempo **tanggal 15** tiap bulan. Reminder muncul tanggal **14** (H-1).
 
-Via terminal:
+Atau via terminal (opsional):
 ```rsc
 /ppp secret set [find name=budi] comment="Budi RT03 - 20Mbps | DUE:15"
 ```
@@ -221,19 +221,24 @@ Lalu import (sekali):
 Ini memblokir internet subnet isolir kecuali DNS + halaman, dan mengarahkan semua
 HTTP mereka ke halaman isolir.
 
-### D2. Cara meng-isolir & mengaktifkan lagi (teknisi)
-Ganti `PAKET100` dengan nama profil paket pelanggan yang sebenarnya.
-```rsc
-# ISOLIR (belum bayar):
-/ppp secret set [find name=budi] profile=ISOLIR
-/ppp active remove [find name=budi]     ;# putus paksa agar reconnect pakai profil baru
+### D2. Cara meng-isolir & mengaktifkan lagi (lewat Winbox — disarankan)
 
-# AKTIFKAN LAGI (sudah bayar):
-/ppp secret set [find name=budi] profile=PAKET100
-/ppp active remove [find name=budi]
-```
-Setelah reconnect, pelanggan isolir mendapat IP subnet isolir → semua halaman
-menjadi halaman isolir; balikin profil → normal lagi otomatis.
+Pakai GUI supaya aman, tidak perlu ketik perintah.
+
+**Meng-ISOLIR (pelanggan belum bayar):**
+1. Winbox → menu **PPP** → tab **Secrets**.
+2. **Double-click** nama pelanggan.
+3. Di kolom **Profile**, pilih **profil isolir** (mis. `ISOLIR`) → klik **OK**.
+4. Pindah ke tab **Active Connections**, klik pelanggan itu, tekan tombol **–**
+   (remove) untuk memutus sesinya. Ia menyambung ulang otomatis dengan profil baru.
+
+**Meng-AKTIFKAN lagi (sudah bayar):**
+1. **PPP → Secrets** → double-click pelanggan.
+2. Kolom **Profile** → pilih kembali profil paketnya (mis. `PAKET100`) → **OK**.
+3. **PPP → Active Connections** → pilih pelanggan → tombol **–** (remove).
+
+> Kenapa perlu remove di Active Connections? Supaya pelanggan langsung dapat IP
+> sesuai profil baru. Kalau tidak, perubahan berlaku saat ia reconnect sendiri.
 
 **Kapan halaman isolir muncul?** Terus-menerus **selama** profil pelanggan = isolir,
 setiap kali menyambung wifi.
@@ -245,10 +250,9 @@ setiap kali menyambung wifi.
 Agar pelanggan tertentu **tidak pernah** melihat halaman reminder (mis. instansi
 yang bayar 3 bulan sekali), ada 2 cara — pilih salah satu:
 
-**Cara A — tag `SKIP` di comment:**
-```rsc
-/ppp secret set [find name=kantor-desa] comment="Kantor Desa - per 3 bln SKIP"
-```
+**Cara A — tag `SKIP` di comment (lewat Winbox):**
+**PPP → Secrets** → double-click pelanggan → tambahkan kata `SKIP` di kolom
+**Comment** → **OK**. Contoh isi comment: `Kantor Desa - per 3 bln SKIP`.
 
 **Cara B — daftar nama di script** (tanpa mengubah comment). Buka
 `billing-scheduler.rsc`, isi:
@@ -263,10 +267,10 @@ yang bayar 3 bulan sekali), ada 2 cara — pilih salah satu:
 
 | Mau… | Lakukan |
 |------|---------|
-| **Ganti tanggal tagihan** pelanggan | Edit comment: ubah angka setelah `DUE:` (mis. `DUE:20`) |
-| **Isolir** pelanggan | `set [find name=X] profile=ISOLIR` lalu `/ppp active remove [find name=X]` |
-| **Aktifkan lagi** | `set [find name=X] profile=PAKET...` lalu `/ppp active remove [find name=X]` |
-| **Kecualikan** dari reminder | Tambah `SKIP` di comment, atau masukkan nama ke `excludeNames` |
+| **Ganti tanggal tagihan** pelanggan | PPP → Secrets → double-click → ubah angka setelah `DUE:` di Comment |
+| **Isolir** pelanggan | PPP → Secrets → Profile = `ISOLIR`; lalu PPP → Active → remove sesinya |
+| **Aktifkan lagi** | PPP → Secrets → Profile = paket semula; lalu PPP → Active → remove sesinya |
+| **Kecualikan** dari reminder | PPP → Secrets → tambah `SKIP` di Comment (atau isi `excludeNames` di script) |
 | **Ganti nomor WA / teks halaman** | Edit `docs/index.html` & `docs/isolir.html` di server, atau edit di GitHub lalu `git pull` di VPS (Cara 1) |
 
 ---
