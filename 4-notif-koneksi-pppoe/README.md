@@ -95,41 +95,49 @@ Notif ini dipasang **per profil**. Pasang di profil paket yang dipakai pelanggan
 **Saat connect (On Up):**
 ```
 ✅ TERHUBUNG
+
 PPPoE : budi
-Total : 120   Mati : 3
-Yang mati: andi, siti, warkop-rt5
-Jam   : 2026-09-14 21:30:11
+Waktu : 2026-09-14 21:30:11
+Profile : PAKET100
+
+Disconnect (3):
+andi, siti, warkop-rt5
 ```
 **Saat disconnect (On Down):**
 ```
 ❌ TERPUTUS
+
 PPPoE : budi
-Total : 120   Mati : 4
-Yang mati: andi, siti, warkop-rt5, budi
-Jam   : 2026-09-14 21:30:11
+Waktu : 2026-09-14 21:30:11
+Profile : PAKET100
+
+Disconnect (4):
+andi, siti, warkop-rt5, budi
 ```
 
-**Isinya:** nama PPPoE yang connect/disconnect, **total** PPPoE, **jumlah yang mati**,
-dan **daftar nama** yang sedang mati. Cocok untuk pantau gangguan sekaligus.
+**Isinya:** nama PPPoE + waktu + profile di atas; lalu **daftar yang sedang
+disconnect** beserta jumlahnya di bawah. Berguna di lapangan: sekali lihat langsung
+tahu siapa saja yang mati (kalau banyak yang drop bareng → kemungkinan gangguan
+kabel/ODP, bukan cuma 1 pelanggan).
 
 **Bagian yang mengatur teks** ada di baris `:local teks (...)` dalam masing-masing file.
 Aturannya:
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
-- `\\n` = ganti baris.
+- `\\n` = ganti baris, `\\n\\n` = baris kosong (jarak 1 enter).
 - Nilai yang sudah dihitung script:
   | Kode | Arti |
   |------|------|
   | `$nama` | nama PPPoE yang connect/disconnect |
-  | `$total` | jumlah total PPPoE (semua secret) |
-  | `$mati` | jumlah PPPoE yang sedang mati (offline) |
-  | `$daftar` | daftar nama PPPoE yang mati |
   | `$waktu` | tanggal & jam |
+  | `$profil` | profile pelanggan (mis. PAKET100 / ISOLIR) |
+  | `$mati` | jumlah PPPoE yang sedang disconnect |
+  | `$daftar` | daftar nama PPPoE yang disconnect |
 
 **Contoh mengubah template** (lebih ringkas):
 ```rsc
-:local teks ("🔴 " . $nama . " putus. Total mati: " . $mati . " dari " . $total)
+:local teks ("🔴 " . $nama . " (" . $profil . ") putus. Total mati: " . $mati)
 ```
-Hasil: `🔴 budi putus. Total mati: 4 dari 120`
+Hasil: `🔴 budi (PAKET100) putus. Total mati: 4`
 
 ---
 
