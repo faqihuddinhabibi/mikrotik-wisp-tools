@@ -131,9 +131,10 @@ Tampil di Telegram (judul & UP/DOWN **tebal**):
 Cara baca:
 - **Aktif: 116/120** → jumlah PPPoE **online / total** semua PPPoE. Sekali lihat tahu
   kesehatan jaringan.
-- Angka di **samping nama** = **berapa kali user itu kedip** (connect/disconnect) dalam
-  interval itu. Mis. `budi (5)` = budi kedip 5×  → koneksinya labil. `andi (1)` = sekali
-  (normal).
+- Angka di **samping nama** = **berapa kali user itu PUTUS** (disconnect) dalam interval
+  itu. 1 siklus putus-lalu-nyambung dihitung **1**. Mis. `budi (5)` = putus 5× →
+  koneksinya labil. `andi (1)` = putus sekali. `(0)` = baru connect tanpa sempat putus
+  di interval itu (mis. perangkat baru dinyalakan).
 - Angka di **samping UP/DOWN** = jumlah user di daftar itu.
 - **UP / DOWN = status SAAT INI** (dicek pas kirim). Jadi yang **masih mati** ada di
   daftar DOWN; yang sudah balik ada di UP.

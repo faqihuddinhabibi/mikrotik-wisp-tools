@@ -4,10 +4,10 @@
 #  (mis. tiap 30 detik).
 #
 #  Cara kerja:
-#   - Ambil user yang BARU berubah (dari antrian on-up/on-down),
-#     hitung "berapa kali kedip" tiap user dalam interval ini.
-#   - Cek STATUS SAAT INI tiap user itu (online/offline),
-#     kelompokkan ke UP / DOWN.
+#   - Ambil user yang BARU berubah (dari antrian on-up/on-down).
+#   - Angka "kedip" per user = BERAPA KALI PUTUS (disconnect) dalam
+#     interval ini (1 putus + nyambung dihitung 1).
+#   - Cek STATUS SAAT INI tiap user (online/offline) -> UP / DOWN.
 #   - Tampilkan juga jumlah aktif vs total PPPoE.
 #   - Kirim 1 pesan.
 #
@@ -24,37 +24,42 @@
 :global pppNotifUp
 :global pppNotifDown
 
-# gabung antrian up+down (mentah, dengan pengulangan), lalu kosongkan
-:local q ""
-:if ([:typeof $pppNotifUp] != "nothing")   do={ :set q ($q . $pppNotifUp) }
-:if ([:typeof $pppNotifDown] != "nothing") do={ :set q ($q . $pppNotifDown) }
+# ambil antrian up & down (terpisah), lalu kosongkan
+:local upq ""
+:local downq ""
+:if ([:typeof $pppNotifUp] != "nothing")   do={ :set upq $pppNotifUp }
+:if ([:typeof $pppNotifDown] != "nothing") do={ :set downq $pppNotifDown }
 :set pppNotifUp ""
 :set pppNotifDown ""
 
-:if ([:len $q] > 0) do={
-    # hitung jumlah kejadian per nama
-    :local cnt [:toarray ""]
-    :local rest $q
+:if (([:len $upq] > 0) || ([:len $downq] > 0)) do={
+    :local kedip   [:toarray ""]   ;# nama -> jumlah disconnect (kedip)
+    :local changed [:toarray ""]   ;# nama -> 1 (gabungan up+down)
+
+    # parse antrian DOWN: hitung kedip + tandai berubah
+    :local rest $downq
     :while ([:len $rest] > 0) do={
         :local p [:find $rest ", "]
         :local nm ""
-        :if ([:typeof $p] = "num") do={
-            :set nm [:pick $rest 0 $p]
-            :set rest [:pick $rest ($p + 2) [:len $rest]]
-        } else={
-            :set nm $rest
-            :set rest ""
-        }
+        :if ([:typeof $p] = "num") do={ :set nm [:pick $rest 0 $p]; :set rest [:pick $rest ($p + 2) [:len $rest]] } else={ :set nm $rest; :set rest "" }
         :if ([:len $nm] > 0) do={
-            :local c ($cnt->$nm)
+            :local c ($kedip->$nm)
             :if ([:typeof $c] = "nothing") do={ :set c 0 }
-            :set ($cnt->$nm) ($c + 1)
+            :set ($kedip->$nm) ($c + 1)
+            :set ($changed->$nm) 1
         }
     }
+    # parse antrian UP: cukup tandai berubah (tidak menambah kedip)
+    :set rest $upq
+    :while ([:len $rest] > 0) do={
+        :local p [:find $rest ", "]
+        :local nm ""
+        :if ([:typeof $p] = "num") do={ :set nm [:pick $rest 0 $p]; :set rest [:pick $rest ($p + 2) [:len $rest]] } else={ :set nm $rest; :set rest "" }
+        :if ([:len $nm] > 0) do={ :set ($changed->$nm) 1 }
+    }
 
-    # kelompokkan per status terkini, sertakan jumlah kedip.
-    # Batasi jumlah nama yang ditulis (hindari batas 4096 karakter Telegram);
-    # sisanya diringkas jadi "… +X lagi". Angka total (nUp/nDown) tetap akurat.
+    # kelompokkan per status terkini. Batasi jumlah nama (hindari 4096 char),
+    # sisanya diringkas "… +X lagi". Angka total (nUp/nDown) tetap akurat.
     :local maxList 30
     :local up ""
     :local down ""
@@ -62,13 +67,15 @@
     :local nDown 0
     :local lUp 0
     :local lDown 0
-    :foreach nm,c in=$cnt do={
+    :foreach nm,x in=$changed do={
+        :local kd ($kedip->$nm)
+        :if ([:typeof $kd] = "nothing") do={ :set kd 0 }
         :if ([:len [/ppp active find where name=$nm]] > 0) do={
             :set nUp ($nUp + 1)
-            :if ($lUp < $maxList) do={ :set up ($up . $nm . " (" . $c . "), "); :set lUp ($lUp + 1) }
+            :if ($lUp < $maxList) do={ :set up ($up . $nm . " (" . $kd . "), "); :set lUp ($lUp + 1) }
         } else={
             :set nDown ($nDown + 1)
-            :if ($lDown < $maxList) do={ :set down ($down . $nm . " (" . $c . "), "); :set lDown ($lDown + 1) }
+            :if ($lDown < $maxList) do={ :set down ($down . $nm . " (" . $kd . "), "); :set lDown ($lDown + 1) }
         }
     }
     :if ([:len $up] > 0)   do={ :set up   [:pick $up 0 ([:len $up] - 2)] }     else={ :set up "-" }
@@ -80,16 +87,15 @@
     :local aktif [/ppp active print count]
     :local waktu "$[/system clock get date] $[/system clock get time]"
 
-    # ---- TEMPLATE PESAN (boleh diubah; pakai format HTML Telegram) ----
+    # ---- TEMPLATE PESAN (boleh diubah; format HTML Telegram) ----
     # CATATAN: karena pakai parse_mode HTML (untuk bold), username PPPoE JANGAN
     # mengandung karakter < > & (bisa bikin SELURUH pesan ditolak Telegram).
-    # Kalau ada username begitu, matikan format: hapus <b> & </b> di bawah, dan
-    # hapus bagian \"parse_mode\":\"HTML\", pada http-data (jadi teks biasa).
+    # Kalau ada, hapus <b>/</b> dan hapus \"parse_mode\":\"HTML\", (jadi teks biasa).
     :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
                  "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
                  "🟢 <b>UP</b> (" . $nUp . "): " . $up . "\\n" . \
                  "🔴 <b>DOWN</b> (" . $nDown . "): " . $down)
-    # ------------------------------------------------------------------
+    # ------------------------------------------------------------
 
     :do {
         /tool fetch keep-result=no http-method=post \
