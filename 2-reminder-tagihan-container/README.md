@@ -14,9 +14,9 @@ Pada versi ini, halaman di-host **di dalam MikroTik sendiri** sebagai container 
 ### Beginilah tampilannya
 
 <p>
-<img src="../screenshots/reminder.jpg" width="230" alt="Halaman pengingat tagihan">
+<img src="../screenshots/reminder.png" width="230" alt="Halaman pengingat tagihan">
 &nbsp;&nbsp;
-<img src="../screenshots/isolir.jpg" width="230" alt="Halaman isolir">
+<img src="../screenshots/isolir.png" width="230" alt="Halaman isolir">
 </p>
 
 Lihat langsung: [reminder](https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/)
@@ -174,25 +174,46 @@ Hasilnya: file **`reminder-web.tar`** di folder `2-reminder-tagihan-container/we
 
 ---
 
-### 🪟 A4 — Aktifkan fitur container di MikroTik (SEKALI SAJA, ADA REBOOT)
+### 🪟 A4 — Pastikan fitur container aktif (CEK DULU sebelum install apa pun)
 
-**Fungsi:** RouterOS defaultnya belum bisa menjalankan container; harus dinyalakan.
-⚠️ Ada reboot — lakukan saat jam sepi.
+**Fungsi:** RouterOS perlu 2 hal untuk bisa menjalankan container: (a) **paket
+`container`** terpasang, dan (b) **device-mode container = yes**. Banyak router
+sudah punya salah satu/keduanya — jadi **cek dulu**, jangan langsung install.
 
-1. **Install paket container:**
-   - Di komputer, unduh `container-<versiRouterOS>.npk` **arsitektur x86** dari
-     https://mikrotik.com/download (samakan versi dengan RouterOS Anda).
-   - 🪟 Di Winbox, buka menu **Files**, lalu **drag-drop** file `.npk` itu ke situ.
-   - 🪟 Menu **System → Reboot**. Setelah nyala, cek menu **System → Packages** →
-     harus ada `container`.
-2. **Nyalakan device-mode container** (langkah ini **harus lewat terminal**):
-   - 🪟 Winbox → **New Terminal**, ketik:
-     ```rsc
-     /system/device-mode/update container=yes
-     ```
-   - RouterOS minta konfirmasi dengan **reboot** + (pada sebagian perangkat) tekan
-     **tombol fisik** di router dalam beberapa detik. Ikuti tulisan di layar.
-   - Cek (di New Terminal): `/system/device-mode/print` → baris `container: yes`.
+**Langkah 1 — Cek paket container:**
+🪟 Winbox → menu **System → Packages**.
+- Kalau **sudah ada** baris `container` (dan tidak "disabled") → **lewati install**,
+  langsung ke Langkah 2.
+- Kalau **belum ada** → install (ini yang butuh reboot):
+  - 🖥️ Di komputer, unduh `container-<versiRouterOS>.npk` **arsitektur x86** dari
+    https://mikrotik.com/download — **samakan versinya** dengan versi RouterOS Anda.
+  - 🪟 Winbox → menu **Files** → **drag-drop** file `.npk` itu.
+  - 🪟 Menu **System → Reboot**. Setelah nyala, cek lagi **System → Packages**.
+
+> **Cara cek versi RouterOS** (untuk menyamakan versi .npk):
+> 🪟 Winbox → **System → Resources** → lihat baris **Version** (mis. `7.24.2`).
+> Board/arsitektur ada di baris **Architecture Name** (x86 = `x86_64`).
+> (Lewat terminal: `/system resource print`.)
+
+**Langkah 2 — Cek device-mode:**
+🪟 Winbox → **New Terminal**:
+```rsc
+/system/device-mode/print
+```
+- Kalau sudah `container: yes` → **selesai**, lanjut ke A5.
+- Kalau belum → nyalakan:
+  ```rsc
+  /system/device-mode/update container=yes
+  ```
+  RouterOS minta konfirmasi dengan **reboot** + (pada sebagian perangkat) tekan
+  **tombol fisik** di router dalam beberapa detik. Ikuti tulisan di layar. ⚠️ Lakukan
+  saat jam sepi.
+
+> **Kalau nanti RouterOS di-upgrade:** paket `container` **harus ikut versi RouterOS**
+> (mismatch versi = paket tak jalan). Saat upgrade RouterOS, upgrade paket container
+> ke versi sama juga (biasanya "Check For Updates" mengurusnya; kalau tidak, unduh
+> `container-<versibaru>.npk` dan pasang ulang). **Image halaman (`reminder-web.tar`)
+> TIDAK perlu diubah** — itu terpisah dari versi RouterOS.
 
 ---
 

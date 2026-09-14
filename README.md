@@ -18,9 +18,9 @@ yang ingin otomatisasi sederhana tanpa server mahal.
 ## Tampilan halaman
 
 <p>
-<img src="screenshots/reminder.jpg" width="240" alt="Halaman pengingat tagihan (H-1)">
+<img src="screenshots/reminder.png" width="240" alt="Halaman pengingat tagihan (H-1)">
 &nbsp;&nbsp;
-<img src="screenshots/isolir.jpg" width="240" alt="Halaman isolir">
+<img src="screenshots/isolir.png" width="240" alt="Halaman isolir">
 </p>
 
 **Lihat langsung (demo):**
