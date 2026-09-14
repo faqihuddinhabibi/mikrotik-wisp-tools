@@ -1,8 +1,9 @@
 # ============================================================
 #  PPPoE Profile Watcher -> Telegram
-#  Deteksi 2 hal di /ppp secret, lalu kirim notifikasi Telegram:
+#  Deteksi 3 hal di /ppp secret, lalu kirim notifikasi Telegram:
 #    1. PROFIL berubah (mis. AKTIF -> ISOLIR)
 #    2. PPPoE BARU (secret baru dibuat)
+#    3. PPPoE DIHAPUS (secret dihapus)
 #
 #  Target : RouterOS 7.x
 #  Jalan  : via scheduler, interval 30 menit
@@ -24,34 +25,49 @@
 :local firstRun false
 :if ([:typeof $pppoeInit] = "nothing") do={ :set firstRun true; :set pppoeInit true }
 
+:local current   [:toarray ""]
+:local newState  [:toarray ""]
+
+# ---- cek secret yang ADA sekarang: BARU / BERUBAH ----
 :foreach s in=[/ppp secret find] do={
     :local nama [/ppp secret get $s name]
     :local prof [/ppp secret get $s profile]
-    :local old  ($pppoeProfileState->$nama)
+    :set ($current->$nama) 1
+    :local old ($pppoeProfileState->$nama)
+    :local teks ""
 
     :if ([:typeof $old] = "nothing") do={
-        # nama belum pernah tercatat = PPPoE baru
-        :if (!$firstRun) do={
-            :local teks ("PPPoE BARU\\nUser: " . $nama . "\\nProfile: " . $prof)
-            :do {
-                /tool fetch keep-result=no http-method=post \
-                    http-header-field="Content-Type: application/json" \
-                    url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
-                    http-data=("{\"chat_id\":\"" . $chatId . "\",\"text\":\"" . $teks . "\"}")
-            } on-error={ :log warning ("pppoe-profile-watch: gagal kirim (baru) " . $nama) }
-        }
-        :set ($pppoeProfileState->$nama) $prof
+        :if (!$firstRun) do={ :set teks ("PPPoE BARU\\nUser: " . $nama . "\\nProfile: " . $prof) }
     } else={
-        :if ($old != $prof) do={
-            :local teks ("PPPoE profile berubah\\nUser: " . $nama . \
-                         "\\nDari: " . $old . "\\nJadi: " . $prof)
+        :if ($old != $prof) do={ :set teks ("PPPoE profile berubah\\nUser: " . $nama . "\\nDari: " . $old . "\\nJadi: " . $prof) }
+    }
+
+    :if ([:len $teks] > 0) do={
+        :do {
+            /tool fetch keep-result=no http-method=post \
+                http-header-field="Content-Type: application/json" \
+                url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
+                http-data=("{\"chat_id\":\"" . $chatId . "\",\"text\":\"" . $teks . "\"}")
+        } on-error={ :log warning ("pppoe-profile-watch: gagal kirim " . $nama) }
+    }
+
+    :set ($newState->$nama) $prof
+}
+
+# ---- cek nama yang HILANG dari state = DIHAPUS ----
+:foreach nm,pr in=$pppoeProfileState do={
+    :if ([:typeof ($current->$nm)] = "nothing") do={
+        :if (!$firstRun) do={
+            :local teks ("PPPoE DIHAPUS\\nUser: " . $nm . "\\nProfile terakhir: " . $pr)
             :do {
                 /tool fetch keep-result=no http-method=post \
                     http-header-field="Content-Type: application/json" \
                     url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
                     http-data=("{\"chat_id\":\"" . $chatId . "\",\"text\":\"" . $teks . "\"}")
-            } on-error={ :log warning ("pppoe-profile-watch: gagal kirim (ubah) " . $nama) }
-            :set ($pppoeProfileState->$nama) $prof
+            } on-error={ :log warning ("pppoe-profile-watch: gagal kirim (hapus) " . $nm) }
         }
     }
 }
+
+# ganti state dengan yang terbaru (nama dihapus otomatis hilang, yang baru masuk)
+:set pppoeProfileState $newState

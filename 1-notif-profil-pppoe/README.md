@@ -1,11 +1,12 @@
 # 1 · Notifikasi Perubahan Profil PPPoE → Telegram
 
 Kirim pesan **Telegram otomatis** saat:
-1. **Profil** pelanggan diubah (contoh: dari `AKTIF` ke `ISOLIR`, atau sebaliknya), dan
-2. Ada **PPPoE baru** (secret pelanggan baru dibuat).
+1. **Profil** pelanggan diubah (contoh: dari `AKTIF` ke `ISOLIR`, atau sebaliknya),
+2. Ada **PPPoE baru** (secret pelanggan baru dibuat), dan
+3. Ada **PPPoE dihapus** (secret pelanggan dihapus).
 
 Cocok untuk pemilik jaringan yang ingin **tahu setiap kali teknisi mengganti
-profil atau menambah pelanggan** — tanpa harus mengecek router satu per satu.
+profil, menambah, atau menghapus pelanggan** — tanpa harus mengecek router satu per satu.
 
 ---
 
@@ -29,6 +30,7 @@ profil atau menambah pelanggan** — tanpa harus mengecek router satu per satu.
 - **Tahu saat profil pelanggan berubah.** Misal teknisi meng-isolir pelanggan
   atau mengaktifkannya kembali — Anda langsung dapat pesan Telegram.
 - **Tahu saat ada pelanggan baru.** Setiap secret PPPoE baru dibuat → notif "PPPoE BARU".
+- **Tahu saat pelanggan dihapus.** Setiap secret PPPoE dihapus → notif "PPPoE DIHAPUS".
 - **Bukti/jejak.** Setiap perubahan tercatat dengan waktu (dari Telegram).
 - **Ringan.** Tidak butuh aplikasi tambahan, tidak butuh server, tidak butuh
   container. Semua berjalan di dalam MikroTik.
@@ -48,6 +50,7 @@ diedit atau saat secret baru dibuat. Jadi script ini bekerja dengan cara
 2. Ia menyimpan "profil terakhir yang diketahui" di memori (RAM).
 3. Kalau ada profil yang **berbeda** dari cek sebelumnya → kirim **"profil berubah"**.
 4. Kalau ada **nama baru** yang belum pernah tercatat → kirim **"PPPoE BARU"**.
+5. Kalau ada nama yang **hilang** (tadinya tercatat, sekarang tidak ada) → kirim **"PPPoE DIHAPUS"**.
 
 Konsekuensinya: perubahan bisa telat diberitahu **maksimal 1 interval** (mis. 30
 menit; bisa dipercepat, lihat bagian kustomisasi). Setelah router **restart**,
@@ -157,6 +160,12 @@ Saat ada pelanggan baru:
 PPPoE BARU
 User: siti
 Profile: PAKET100
+```
+Saat pelanggan dihapus:
+```
+PPPoE DIHAPUS
+User: andi
+Profile terakhir: ISOLIR
 ```
 
 **Bagian yang mengatur teks itu** ada di dalam `pppoe-profile-watch.rsc`, di baris ini:
