@@ -173,11 +173,15 @@ pesan per interval, jadi tetap aman dari limit.
 - **Nama muncul sekali + angka kedip.** User yang putus-sambung berkali-kali tetap
   muncul **sekali**, dengan angka berapa kali dia kedip (mis. `budi (5)`), di posisi
   **status terkininya** (UP/DOWN). Pesan tetap rapi & langsung kelihatan yang labil.
-- **Mati lampu / gangguan massal:** semua user putus → dikirim **1 pesan** berisi
-  daftar DOWN (mis. `DOWN (395): ...`). Interval berikutnya **tidak ada kejadian
-  baru → tidak kirim apa-apa** (tidak spam terus-menerus). Saat listrik pulih &
-  semua nyambung lagi → dikirim **1 pesan** berisi daftar UP. Jadi hanya dikirim
-  saat ada perubahan.
+- **Batas panjang pesan (penting).** Telegram membatasi **4096 karakter/pesan**.
+  Kalau nama sangat banyak (mis. mati lampu, ratusan putus sekaligus), daftar
+  dipotong otomatis: ditampilkan maksimal **40 nama**, sisanya diringkas
+  `… +355 lagi`. Angka total `(395)` tetap akurat, dan pesan tidak ditolak Telegram.
+  Ubah batas di `kirim-notif.rsc`: `:local maxList 40`.
+- **Mati lampu / gangguan massal:** semua user putus → dikirim **1 pesan**, mis.
+  `🔴 DOWN (395): budi (1), siti (1), … +355 lagi`. Interval berikutnya **tidak ada
+  kejadian baru → tidak kirim apa-apa** (tidak spam). Saat listrik pulih & semua
+  nyambung → **1 pesan** daftar UP. Jadi hanya dikirim saat ada perubahan.
 - **Jangan kirim password** pelanggan (bocor privasi) — template ini tidak memakainya.
 - SSL error? `/ip dns set servers=1.1.1.1,8.8.8.8` (lihat catatan CA di
   [README Alat 1](../1-notif-profil-pppoe#kalau-ada-masalah)).

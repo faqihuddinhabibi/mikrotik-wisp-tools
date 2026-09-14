@@ -52,22 +52,29 @@
         }
     }
 
-    # kelompokkan per status terkini, sertakan jumlah kedip
+    # kelompokkan per status terkini, sertakan jumlah kedip.
+    # Batasi jumlah nama yang ditulis (hindari batas 4096 karakter Telegram);
+    # sisanya diringkas jadi "… +X lagi". Angka total (nUp/nDown) tetap akurat.
+    :local maxList 40
     :local up ""
     :local down ""
     :local nUp 0
     :local nDown 0
+    :local lUp 0
+    :local lDown 0
     :foreach nm,c in=$cnt do={
         :if ([:len [/ppp active find where name=$nm]] > 0) do={
-            :set up ($up . $nm . " (" . $c . "), ")
             :set nUp ($nUp + 1)
+            :if ($lUp < $maxList) do={ :set up ($up . $nm . " (" . $c . "), "); :set lUp ($lUp + 1) }
         } else={
-            :set down ($down . $nm . " (" . $c . "), ")
             :set nDown ($nDown + 1)
+            :if ($lDown < $maxList) do={ :set down ($down . $nm . " (" . $c . "), "); :set lDown ($lDown + 1) }
         }
     }
     :if ([:len $up] > 0)   do={ :set up   [:pick $up 0 ([:len $up] - 2)] }     else={ :set up "-" }
     :if ([:len $down] > 0) do={ :set down [:pick $down 0 ([:len $down] - 2)] } else={ :set down "-" }
+    :if ($nUp > $lUp)     do={ :set up   ($up . " … +" . ($nUp - $lUp) . " lagi") }
+    :if ($nDown > $lDown) do={ :set down ($down . " … +" . ($nDown - $lDown) . " lagi") }
 
     :local total [/ppp secret print count]
     :local aktif [/ppp active print count]
