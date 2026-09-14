@@ -97,6 +97,7 @@ Notif ini dipasang **per profil**. Pasang di profil paket yang dipakai pelanggan
 ✅ TERHUBUNG
 
 PPPoE : budi
+Lokasi : RT03
 Profile : PAKET100
 Waktu : 2026-09-14 21:30:11
 
@@ -108,36 +109,68 @@ andi, siti, warkop-rt5
 ❌ TERPUTUS
 
 PPPoE : budi
+Lokasi : RT03
 Profile : PAKET100
 Waktu : 2026-09-14 21:30:11
 
 Disconnect (4):
 andi, siti, warkop-rt5, budi
 ```
+**Saat banyak yang mati bersamaan** (≥ ambang alarm) — muncul peringatan di atas:
+```
+❌ TERPUTUS
 
-**Isinya:** nama PPPoE + waktu + profile di atas; lalu **daftar yang sedang
-disconnect** beserta jumlahnya di bawah. Berguna di lapangan: sekali lihat langsung
-tahu siapa saja yang mati (kalau banyak yang drop bareng → kemungkinan gangguan
-kabel/ODP, bukan cuma 1 pelanggan).
+⚠️ BANYAK DISCONNECT — cek jaringan/ODP!
 
-**Bagian yang mengatur teks** ada di baris `:local teks (...)` dalam masing-masing file.
-Aturannya:
+PPPoE : budi
+Lokasi : RT03
+Profile : PAKET100
+Waktu : 2026-09-14 21:30:11
+
+Disconnect (8):
+andi, siti, warkop-rt5, budi, ...
+```
+
+**Isinya:** nama PPPoE, lokasi, profile, waktu; lalu **daftar yang sedang disconnect**
++ jumlahnya. Kalau banyak drop bareng → peringatan gangguan (kemungkinan kabel/ODP,
+bukan cuma 1 pelanggan). Berguna di lapangan.
+
+### Dari mana "Lokasi" diambil?
+Dari **comment** `/ppp secret`, bagian **sebelum tanda `/`**. Contoh comment:
+```
+RT03 / Budi Santoso - DUE:15
+```
+→ Lokasi = `RT03`. Kalau comment tidak ada `/`, Lokasi menampilkan seluruh comment;
+kalau comment kosong, tampil `-`. (Format comment ini juga dipakai
+[Alat 2/3](../2-reminder-tagihan-container) untuk `DUE:` — aman dipakai bersama.)
+
+### Ambang alarm
+Di atas script ada:
+```rsc
+:local alarmMati 5
+```
+Kalau jumlah disconnect **≥ 5** → muncul peringatan. Ubah angkanya sesuai selera
+(mis. `10`). Set besar sekali (mis. `9999`) untuk mematikan alarm.
+
+**Bagian yang mengatur teks** ada di baris `:local teks (...)`.
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
 - `\\n` = ganti baris, `\\n\\n` = baris kosong (jarak 1 enter).
 - Nilai yang sudah dihitung script:
   | Kode | Arti |
   |------|------|
   | `$nama` | nama PPPoE yang connect/disconnect |
-  | `$waktu` | tanggal & jam |
+  | `$lokasi` | lokasi (dari comment sebelum `/`) |
   | `$profil` | profile pelanggan (mis. PAKET100 / ISOLIR) |
+  | `$waktu` | tanggal & jam |
   | `$mati` | jumlah PPPoE yang sedang disconnect |
   | `$daftar` | daftar nama PPPoE yang disconnect |
+  | `$alarm` | baris peringatan (terisi kalau `$mati` ≥ ambang) |
 
 **Contoh mengubah template** (lebih ringkas):
 ```rsc
-:local teks ("🔴 " . $nama . " (" . $profil . ") putus. Total mati: " . $mati)
+:local teks ("🔴 " . $nama . " (" . $lokasi . ") putus. Total mati: " . $mati)
 ```
-Hasil: `🔴 budi (PAKET100) putus. Total mati: 4`
+Hasil: `🔴 budi (RT03) putus. Total mati: 4`
 
 ---
 

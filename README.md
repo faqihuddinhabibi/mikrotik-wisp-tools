@@ -106,6 +106,15 @@ token berikut):
 | `DUE:NN` | Tanggal jatuh tempo (pakai **1–28**) | `Budi RT03 - 20Mbps \| DUE:15` |
 | `SKIP` | Jangan pernah tampilkan halaman reminder ke user ini | `Kantor Desa - per 3 bln SKIP` |
 
+**Format yang disarankan** (mendukung semua alat sekaligus):
+```
+NAMA-DAERAH / nama pelanggan - DUE:NN
+```
+Contoh: `RT03 / Budi Santoso - DUE:15`
+- Bagian **sebelum `/`** dipakai [Alat 4](4-notif-koneksi-pppoe) sebagai **Lokasi**.
+- `DUE:NN` dipakai [Alat 2/3](2-reminder-tagihan-container) untuk reminder.
+- Tambah `SKIP` kalau user tidak boleh kena halaman reminder.
+
 - Reminder muncul **H-1** (sehari sebelum `DUE`).
 - Script hanya **membaca** comment, tidak menimpanya.
 
