@@ -3,12 +3,15 @@
 Kumpulan alat praktis untuk **WISP / RT-RW Net berbasis PPPoE** di MikroTik —
 **tanpa aplikasi billing berbayar, tanpa langganan, dikontrol dari Winbox**.
 
-Tiga alat yang saling melengkapi:
+Alat yang saling melengkapi:
 
-1. **Notifikasi Telegram** saat profil pelanggan diubah (mis. diisolir/diaktifkan).
+1. **Notif profil berubah** — pesan Telegram saat profil pelanggan diubah
+   (mis. diisolir/diaktifkan). *(Alat 1)*
 2. **Reminder tagihan otomatis** — halaman pengingat muncul di HP pelanggan sehari
-   sebelum jatuh tempo (mirip splash page wifi.id).
-3. **Isolir** — blokir pelanggan yang belum bayar + halaman "silakan bayar".
+   sebelum jatuh tempo (mirip splash page wifi.id), **+ isolir** (blokir + halaman
+   "silakan bayar"). *(Alat 2 atau 3, tergantung tempat hosting)*
+3. **Notif connect/disconnect** — pesan Telegram real-time saat pelanggan
+   terhubung/terputus. *(Alat 4)*
 
 Berjalan di **RouterOS 7.x** (diuji di perangkat x86). Cocok untuk jaringan kecil
 yang ingin otomatisasi sederhana tanpa server mahal.
@@ -51,7 +54,12 @@ mikrotik-wisp-tools/
 ├── 3-reminder-tagihan-vps/        ALAT 2 & 3 — reminder + isolir, halaman di VPS
 │   ├── README.md
 │   ├── mikrotik/                  script RouterOS
-│   └── web/                       Dockerfile, docker-compose, CI/CD
+│   └── web/                       nginx (Docker opsional), CI/CD
+│
+├── 4-notif-koneksi-pppoe/         ALAT 4 — notif Telegram connect/disconnect
+│   ├── README.md
+│   ├── ppp-on-up.rsc              (script kolom "On Up")
+│   └── ppp-on-down.rsc            (script kolom "On Down")
 │
 ├── LICENSE
 └── README.md

@@ -8,6 +8,17 @@ Pada versi ini, halaman di-host di **VPS sendiri** (server dengan IP tetap).
 Kalau ingin halaman di-host **di dalam MikroTik** tanpa VPS, pakai
 [folder 2 (container)](../2-reminder-tagihan-container).
 
+### Beginilah tampilannya
+
+<p>
+<img src="../screenshots/reminder.png" width="230" alt="Halaman pengingat tagihan">
+&nbsp;&nbsp;
+<img src="../screenshots/isolir.png" width="230" alt="Halaman isolir">
+</p>
+
+Lihat langsung: [reminder](https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/)
+· [isolir](https://faqihuddinhabibi.github.io/mikrotik-wisp-tools/isolir.html)
+
 ---
 
 ## Daftar isi
