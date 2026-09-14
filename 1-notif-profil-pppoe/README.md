@@ -1,10 +1,11 @@
 # 1 · Notifikasi Perubahan Profil PPPoE → Telegram
 
-Kirim pesan **Telegram otomatis** setiap kali **profil** seorang pelanggan PPPoE
-diubah di MikroTik (contoh: dari `AKTIF` ke `ISOLIR`, atau sebaliknya).
+Kirim pesan **Telegram otomatis** saat:
+1. **Profil** pelanggan diubah (contoh: dari `AKTIF` ke `ISOLIR`, atau sebaliknya), dan
+2. Ada **PPPoE baru** (secret pelanggan baru dibuat).
 
 Cocok untuk pemilik jaringan yang ingin **tahu setiap kali teknisi mengganti
-profil** pelanggan — tanpa harus mengecek router satu per satu.
+profil atau menambah pelanggan** — tanpa harus mengecek router satu per satu.
 
 ---
 
@@ -27,29 +28,31 @@ profil** pelanggan — tanpa harus mengecek router satu per satu.
 
 - **Tahu saat profil pelanggan berubah.** Misal teknisi meng-isolir pelanggan
   atau mengaktifkannya kembali — Anda langsung dapat pesan Telegram.
+- **Tahu saat ada pelanggan baru.** Setiap secret PPPoE baru dibuat → notif "PPPoE BARU".
 - **Bukti/jejak.** Setiap perubahan tercatat dengan waktu (dari Telegram).
 - **Ringan.** Tidak butuh aplikasi tambahan, tidak butuh server, tidak butuh
   container. Semua berjalan di dalam MikroTik.
 
-> Ini **berbeda** dari script "user connect/disconnect". Yang ini khusus mendeteksi
-> **perubahan profil** di `/ppp secret`.
+> Ini **berbeda** dari script "user connect/disconnect" (Alat 4). Yang ini mendeteksi
+> **perubahan profil & pelanggan baru** di `/ppp secret`, bukan koneksi naik/turun.
 
 ---
 
 ## Bagaimana cara kerjanya?
 
 RouterOS **tidak punya "alarm" bawaan** yang berbunyi saat profil sebuah secret
-diedit. Jadi script ini bekerja dengan cara **mengecek berkala** (penjadwal tiap
-1 jam):
+diedit atau saat secret baru dibuat. Jadi script ini bekerja dengan cara
+**mengecek berkala** (penjadwal, mis. tiap 30 menit):
 
-1. Setiap jam, script membaca profil semua pelanggan.
+1. Setiap cek, script membaca profil semua pelanggan.
 2. Ia menyimpan "profil terakhir yang diketahui" di memori (RAM).
-3. Kalau ada yang berbeda dari cek sebelumnya → **kirim Telegram**.
+3. Kalau ada profil yang **berbeda** dari cek sebelumnya → kirim **"profil berubah"**.
+4. Kalau ada **nama baru** yang belum pernah tercatat → kirim **"PPPoE BARU"**.
 
-Konsekuensinya: perubahan bisa telat diberitahu **maksimal 1 jam** (bisa
-dipercepat, lihat bagian kustomisasi). Setelah router **restart**, daftar di memori
-kosong; saat cek pertama sesudah restart script hanya **mencatat ulang** (tidak
-mengirim), supaya tidak spam.
+Konsekuensinya: perubahan bisa telat diberitahu **maksimal 1 interval** (mis. 30
+menit; bisa dipercepat, lihat bagian kustomisasi). Setelah router **restart**,
+daftar di memori kosong; saat cek pertama sesudah restart script hanya **mencatat
+ulang semua** (tidak mengirim apa pun), supaya tidak spam ratusan "baru".
 
 ---
 
@@ -108,13 +111,10 @@ Chat ID = alamat tujuan pesan (bisa chat pribadi atau grup).
 
 ## Langkah 4 — Pasang scheduler (penjadwal)
 
-Agar script jalan otomatis tiap 1 jam. Buka **New Terminal**, tempel:
+Agar script jalan otomatis tiap 30 menit. Buka **New Terminal**, tempel (1 baris):
 
 ```rsc
-/system scheduler
-add name=pppoe-profile-watch interval=1h \
-    on-event="/system script run pppoe-profile-watch" \
-    comment="Cek perubahan profil PPPoE -> Telegram"
+/system scheduler add name=pppoe-profile-watch interval=30m on-event="/system script run pppoe-profile-watch" comment="Cek perubahan profil PPPoE -> Telegram"
 ```
 
 ---
@@ -144,11 +144,19 @@ Kalau muncul → berhasil. Selanjutnya berjalan otomatis tiap jam.
 ## Contoh pesan & cara mengubah templatenya
 
 **Bentuk pesan bawaan** yang masuk ke Telegram:
+
+Saat profil berubah:
 ```
 PPPoE profile berubah
 User: budi
 Dari: AKTIF
 Jadi: ISOLIR
+```
+Saat ada pelanggan baru:
+```
+PPPoE BARU
+User: siti
+Profile: PAKET100
 ```
 
 **Bagian yang mengatur teks itu** ada di dalam `pppoe-profile-watch.rsc`, di baris ini:
@@ -189,7 +197,7 @@ lalu sisipkan ke `teks`, mis. `. "\\nPaket: " . $paket`.
 > pengiriman. Gunakan kata biasa & `\\n` untuk baris baru.
 
 ## Mengubah kecepatan cek
-Ganti `interval=1h` jadi `interval=5m` (5 menit) di scheduler kalau ingin lebih
+Ganti `interval=30m` jadi `interval=5m` (5 menit) di scheduler kalau ingin lebih
 cepat. Makin sering = makin banyak kerja router (untuk perubahan profil, 1 jam
 biasanya sudah cukup).
 
@@ -222,9 +230,28 @@ Kalau "tes" masuk Telegram → token & chat id benar.
 
 ---
 
+## Cara update (kalau script diperbarui)
+
+Script yang jalan itu **yang tersimpan di router** (di System → Scripts), bukan file
+di GitHub. File GitHub cuma sumber/salinan. Jadi untuk memperbarui:
+
+1. 🪟 Winbox → **System → Scripts** → **double-click** `pppoe-profile-watch`.
+2. **Hapus** isi kolom **Source**, **paste** versi baru.
+3. Isi lagi `botToken` & `chatId`, klik **OK**.
+
+**Scheduler tidak perlu diubah** — dia cuma memanggil script berdasarkan nama.
+Cukup update Source script-nya saja.
+
+> Berlaku sama untuk semua alat: yang di-update cukup **isi script di router**
+> (Source), bukan schedulernya. Kalau versi baru menambah variabel global baru
+> (mis. `pppoeInit`), tidak perlu tindakan khusus — otomatis dibuat saat jalan.
+
+---
+
 ## Cara mencopot
 ```rsc
 /system scheduler remove [find name=pppoe-profile-watch]
 /system script remove [find name=pppoe-profile-watch]
 :global pppoeProfileState; :set pppoeProfileState
+:global pppoeInit; :set pppoeInit
 ```
