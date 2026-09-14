@@ -231,6 +231,14 @@ ke jendela Files.
 **Fungsi:** membuat "jalur" jaringan kecil antara router (`172.17.0.1`) dan
 container halaman (`172.17.0.2`).
 
+> **Penting:** `172.17.0.1` & `172.17.0.2` adalah **IP baru** yang dibuat khusus untuk
+> jembatan ini — **bukan** IP router/server Anda yang asli, bukan IP publik, bukan IP
+> pelanggan. Keduanya hanya hidup **di dalam** router (subnet baru `172.17.0.0/24`).
+> `172.17.0.1` = sisi router, `172.17.0.2` = sisi container (tempat halaman).
+> Range `172.17.0.x` dipilih karena umumnya tidak dipakai jaringan lain — kalau
+> ternyata sudah Anda pakai, ganti ke subnet privat lain (mis. `172.20.0.0/24`) dan
+> sesuaikan `redirectUrl`/`pageIp` di script isolir ke alamat `.2`-nya.
+
 Cara paling pasti: 🪟 Winbox → **New Terminal**, tempel 4 baris ini sekaligus:
 ```rsc
 /interface/veth/add name=veth-web address=172.17.0.2/24 gateway=172.17.0.1
