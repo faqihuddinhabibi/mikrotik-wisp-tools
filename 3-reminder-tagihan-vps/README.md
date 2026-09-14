@@ -81,7 +81,7 @@ ke halaman kita → muncul notifikasi "Sign in", persis seperti wifi.id.
 ## Yang perlu disiapkan
 
 - **VPS** (contoh: Ubuntu 24.04 LTS) dengan **IP publik** & akses SSH.
-  Cukup **nginx** (ringan); Docker **opsional**.
+  Cukup **nginx** (ringan) — tanpa Docker.
 - Akses **MikroTik** (Winbox), RouterOS 7.x.
 - Profil **isolir** + **pool IP terpisah** untuk isolir (kalau mau pakai fitur isolir).
   Cek pool Anda dengan `/ip pool print`.
@@ -91,13 +91,8 @@ ke halaman kita → muncul notifikasi "Sign in", persis seperti wifi.id.
 
 ## Bagian A — Siapkan halaman di VPS
 
-Halaman ini cuma file statis (2 HTML). **Cara paling sederhana = nginx langsung
-(tanpa Docker).** Docker disediakan sebagai alternatif kalau Anda memang sudah
-terbiasa dengannya.
-
-### Cara 1 (disarankan) — nginx langsung, TANPA Docker
-
-Ringan, tanpa container, tanpa CI/CD. Update cukup `git pull`.
+Halaman ini cuma file statis (2 HTML). Cukup **nginx** — ringan, tanpa Docker,
+tanpa CI/CD. Update cukup `git pull`.
 
 ```bash
 # 1) install nginx + git
@@ -141,22 +136,8 @@ Langsung live — tidak perlu restart apa pun (file statis).
 > Kalau Anda mengedit langsung di server (bukan lewat GitHub), cukup edit filenya;
 > perubahan langsung tampil.
 
----
-
-### Cara 2 (alternatif) — Docker
-
-Kalau lebih suka pakai Docker:
-```bash
-sudo apt install -y docker.io docker-compose-plugin
-git clone https://github.com/faqihuddinhabibi/mikrotik-wisp-tools.git
-cd mikrotik-wisp-tools/3-reminder-tagihan-vps/web
-sudo docker compose up -d --build
-```
-Update: `git pull` lalu `docker compose up -d --build`.
-(CI/CD opsional ada di [`web/deploy-vps.yml.example`](web/deploy-vps.yml.example).)
-
-> Port 80 sudah dipakai? Cara 1: ubah `listen 80` → `listen 8080`. Cara 2: ubah
-> `ports` di `docker-compose.yml` jadi `"8080:80"`. Lalu pakai `IP-VPS:8080` di MikroTik.
+> Port 80 sudah dipakai web lain? Ubah `listen 80` → `listen 8080` di konfigurasi
+> nginx di atas, lalu pakai `IP-VPS:8080` di setting MikroTik.
 
 ---
 
@@ -343,6 +324,7 @@ yang bayar 3 bulan sekali), ada 2 cara — pilih salah satu:
 # matikan proxy kalau tidak dipakai lagi
 /ip proxy set enabled=no
 ```
-Di VPS:
-- Cara 1 (nginx): `sudo rm /etc/nginx/sites-enabled/reminder && sudo systemctl reload nginx`
-- Cara 2 (Docker): `cd 3-reminder-tagihan-vps/web && sudo docker compose down`
+Di VPS (nginx):
+```bash
+sudo rm /etc/nginx/sites-enabled/reminder && sudo systemctl reload nginx
+```

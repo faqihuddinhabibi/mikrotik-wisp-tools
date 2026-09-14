@@ -95,38 +95,41 @@ Notif ini dipasang **per profil**. Pasang di profil paket yang dipakai pelanggan
 **Saat connect (On Up):**
 ```
 ✅ TERHUBUNG
-User  : budi
-IP    : 100.64.10.23
-MAC   : AA:BB:CC:DD:EE:FF
-Waktu : 2026-09-14 21:30:11
+PPPoE : budi
+Total : 120   Mati : 3
+Yang mati: andi, siti, warkop-rt5
+Jam   : 2026-09-14 21:30:11
 ```
 **Saat disconnect (On Down):**
 ```
 ❌ TERPUTUS
-User    : budi
-IP      : 100.64.10.23
-Durasi  : 4h12m30s
-Waktu   : 2026-09-14 21:30:11
+PPPoE : budi
+Total : 120   Mati : 4
+Yang mati: andi, siti, warkop-rt5, budi
+Jam   : 2026-09-14 21:30:11
 ```
 
+**Isinya:** nama PPPoE yang connect/disconnect, **total** PPPoE, **jumlah yang mati**,
+dan **daftar nama** yang sedang mati. Cocok untuk pantau gangguan sekaligus.
+
 **Bagian yang mengatur teks** ada di baris `:local teks (...)` dalam masing-masing file.
-Aturannya sama seperti Alat 1:
+Aturannya:
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
 - `\\n` = ganti baris.
-- Variabel diisi otomatis. Yang tersedia:
-  | Variabel | Arti | On Up | On Down |
-  |----------|------|:-----:|:-------:|
-  | `$user` | nama pelanggan | ✅ | ✅ |
-  | `$"remote-address"` | IP yang didapat pelanggan | ✅ | ✅ |
-  | `$"caller-id"` | MAC/identitas penelepon | ✅ | ✅ |
-  | `$"interface"` | nama interface sesi | ✅ | ✅ |
-  | `$uptime` | lama sesi | — | ✅ |
+- Nilai yang sudah dihitung script:
+  | Kode | Arti |
+  |------|------|
+  | `$nama` | nama PPPoE yang connect/disconnect |
+  | `$total` | jumlah total PPPoE (semua secret) |
+  | `$mati` | jumlah PPPoE yang sedang mati (offline) |
+  | `$daftar` | daftar nama PPPoE yang mati |
+  | `$waktu` | tanggal & jam |
 
 **Contoh mengubah template** (lebih ringkas):
 ```rsc
-:local teks ("🟢 " . $user . " online (" . $"remote-address" . ")")
+:local teks ("🔴 " . $nama . " putus. Total mati: " . $mati . " dari " . $total)
 ```
-Hasil: `🟢 budi online (100.64.10.23)`
+Hasil: `🔴 budi putus. Total mati: 4 dari 120`
 
 ---
 
@@ -150,7 +153,8 @@ Hasil: `🟢 budi online (100.64.10.23)`
 | Tidak ada pesan | Cek token & chat id. Tes kirim manual (lihat README Alat 1). Pastikan script benar-benar tertempel di kolom On Up/On Down profil yang dipakai pelanggan. |
 | Hanya connect / hanya disconnect yang masuk | Berarti salah satu kolom (On Up **atau** On Down) belum diisi. |
 | Pesan membanjiri | Jaringan flapping. Kirim ke grup yang di-mute, atau kurangi profil yang dipasangi. |
-| `$uptime` kosong di On Up | Wajar — `$uptime` hanya ada di On Down. |
+| Daftar "yang mati" sangat panjang | Kalau pelanggan sangat banyak & banyak yang mati, daftar bisa panjang (batas Telegram 4096 karakter). Bisa hapus baris `Yang mati` dari template dan cukup tampilkan angka `$mati`. |
+| Angka `Mati` seperti telat 1 saat disconnect | Wajar — saat On Down, sesi yang baru putus kadang masih terhitung sesaat. Selisih 1 tidak masalah. |
 
 ---
 

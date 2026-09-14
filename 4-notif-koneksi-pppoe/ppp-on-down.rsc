@@ -3,8 +3,8 @@
 #  Tempel isi file ini ke kolom "On Down" pada /ppp profile.
 #  Berjalan OTOMATIS & REAL-TIME setiap pelanggan terputus.
 #
-#  Variabel yang tersedia di On Down:
-#    $user, $"remote-address", $"caller-id", $"interface", $uptime
+#  Isi pesan: nama PPPoE yang terputus + total PPPoE + jumlah
+#  yang mati + daftar nama yang mati.
 # ============================================================
 
 # ---- GANTI dua baris ini ----
@@ -12,17 +12,28 @@
 :local chatId   "ISI_CHAT_ID"
 # -----------------------------
 
-:local nama   $user
-:local ip     $"remote-address"
-:local lama   $uptime
-:local waktu  "$[/system clock get date] $[/system clock get time]"
+:local nama  $user
+:local waktu "$[/system clock get date] $[/system clock get time]"
+
+# hitung total PPPoE, yang mati, dan daftar nama yang mati
+:local total [/ppp secret print count]
+:local mati 0
+:local daftar ""
+:foreach s in=[/ppp secret find] do={
+    :local nm [/ppp secret get $s name]
+    :if ([:len [/ppp active find where name=$nm]] = 0) do={
+        :set mati ($mati + 1)
+        :set daftar ($daftar . $nm . ", ")
+    }
+}
+:if ([:len $daftar] > 0) do={ :set daftar [:pick $daftar 0 ([:len $daftar] - 2)] } else={ :set daftar "-" }
 
 # ---- TEMPLATE PESAN (boleh diubah) ----
 :local teks ("❌ TERPUTUS\\n" . \
-             "User    : " . $nama . "\\n" . \
-             "IP      : " . $ip . "\\n" . \
-             "Durasi  : " . $lama . "\\n" . \
-             "Waktu   : " . $waktu)
+             "PPPoE : " . $nama . "\\n" . \
+             "Total : " . $total . "   Mati : " . $mati . "\\n" . \
+             "Yang mati: " . $daftar . "\\n" . \
+             "Jam   : " . $waktu)
 # ---------------------------------------
 
 :do {

@@ -52,9 +52,8 @@ mikrotik-wisp-tools/
 │   └── web/                       Dockerfile + skrip build image container
 │
 ├── 3-reminder-tagihan-vps/        ALAT 2 & 3 — reminder + isolir, halaman di VPS
-│   ├── README.md
-│   ├── mikrotik/                  script RouterOS
-│   └── web/                       nginx (Docker opsional), CI/CD
+│   ├── README.md                  (setup nginx ada di README, tanpa Docker)
+│   └── mikrotik/                  script RouterOS
 │
 ├── 4-notif-koneksi-pppoe/         ALAT 4 — notif Telegram connect/disconnect
 │   ├── README.md
@@ -77,7 +76,7 @@ mengarahkan ke URL/IP-nya.
 
 | Cara | Folder | Cocok kalau… | Catatan |
 |------|--------|--------------|---------|
-| **VPS (nginx)** | [`3-reminder-tagihan-vps`](3-reminder-tagihan-vps) | Punya server dengan IP tetap | Paling seimbang & **paling ringan**: nginx + 1 folder, update `git pull`. Docker opsional |
+| **VPS (nginx)** | [`3-reminder-tagihan-vps`](3-reminder-tagihan-vps) | Punya server dengan IP tetap | Paling seimbang & **paling ringan**: nginx + 1 folder, update `git pull` (tanpa Docker) |
 | **Container di MikroTik** | [`2-reminder-tagihan-container`](2-reminder-tagihan-container) | Tak mau server/internet luar | Halaman lokal selalu tersedia; **butuh Docker/OCI + paket container + reboot** |
 | **GitHub Pages** | `docs/` | Sekadar coba cepat / gratis | Nol maintenance; IP bisa berubah → whitelist isolir rawan basi |
 
