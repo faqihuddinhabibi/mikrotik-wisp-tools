@@ -1,8 +1,15 @@
 # 4 · Notifikasi Koneksi PPPoE (Connect / Disconnect) → Telegram
 
-Kirim pesan **Telegram real-time** setiap pelanggan PPPoE **terhubung** (connect)
-atau **terputus** (disconnect). Berguna untuk memantau kondisi jaringan &
-gangguan dari HP.
+Kirim **ringkasan** pelanggan PPPoE yang **terhubung** (connect) & **terputus**
+(disconnect) ke Telegram, dikirim rutin tiap beberapa detik dalam **1 pesan**.
+Berguna untuk memantau kondisi jaringan & gangguan dari HP.
+
+> **Kenapa model "ringkasan", bukan kirim per-kejadian?**
+> Mengirim Telegram **langsung** dari `on-down` **tidak andal**: saat sesi putus,
+> RouterOS sedang membereskan sesi itu, sehingga pengiriman sering **ke-cut** (kadang
+> masuk, kadang tidak — terlihat acak). Kirim beruntun juga gampang **kena limit**
+> Telegram. Model ini menghindari kedua masalah itu, dan **lebih ringan** untuk
+> jaringan besar (ratusan pelanggan).
 
 ---
 
@@ -11,10 +18,12 @@ gangguan dari HP.
 - [Bagaimana cara kerjanya?](#bagaimana-cara-kerjanya)
 - [Yang perlu disiapkan](#yang-perlu-disiapkan)
 - [Langkah 1 — Buat bot Telegram](#langkah-1--buat-bot-telegram)
-- [Langkah 2 — Pasang di profil (lewat Winbox)](#langkah-2--pasang-di-profil-lewat-winbox)
-- [Langkah 3 — Uji coba](#langkah-3--uji-coba)
+- [Langkah 2 — Pasang pencatat di profil (On Up/On Down)](#langkah-2--pasang-pencatat-di-profil-on-upon-down)
+- [Langkah 3 — Pasang pengirim + scheduler](#langkah-3--pasang-pengirim--scheduler)
+- [Langkah 4 — Uji coba](#langkah-4--uji-coba)
 - [Contoh pesan & cara ubah template](#contoh-pesan--cara-ubah-template)
-- [Catatan penting](#catatan-penting)
+- [Atur kecepatan (interval)](#atur-kecepatan-interval)
+- [Catatan](#catatan)
 - [Kalau ada masalah](#kalau-ada-masalah)
 - [Cara mencopot](#cara-mencopot)
 
@@ -22,185 +31,150 @@ gangguan dari HP.
 
 ## Apa gunanya? (dan beda dengan Alat 1)
 
-- **Tahu real-time** saat pelanggan online/offline → cepat mendeteksi gangguan.
-- Pas ada laporan "internet mati", Anda bisa cek riwayat connect/disconnect-nya.
+- **Pantau real-ish-time** siapa saja yang online/offline → cepat tahu gangguan.
+- Kalau banyak putus bersamaan dalam 1 ringkasan → indikasi gangguan kabel/ODP.
 
 > **Beda dengan [Alat 1](../1-notif-profil-pppoe):**
-> - **Alat 1** = notif saat **profil** pelanggan diubah (mis. diisolir). Pakai
->   pengecekan berkala (scheduler).
-> - **Alat 4 (ini)** = notif saat pelanggan **connect/disconnect**. Pakai event
->   bawaan RouterOS (`on-up`/`on-down`), jadi **real-time**.
->
-> Keduanya bisa dipakai bersamaan dan boleh memakai **bot Telegram yang sama**.
+> - **Alat 1** = notif saat **profil** diubah (mis. diisolir). Pengecekan berkala.
+> - **Alat 4 (ini)** = ringkasan **connect/disconnect**.
+> Boleh pakai **bot yang sama**, tapi **disarankan grup berbeda** (Alat 4 lebih rame).
 
 ---
 
 ## Bagaimana cara kerjanya?
 
-RouterOS punya "pemicu" bawaan di tiap **profil PPPoE**:
-- **On Up** → dijalankan saat sesi pelanggan **naik** (connect).
-- **On Down** → dijalankan saat sesi **turun** (disconnect).
+```
+Tiap pelanggan connect  → On Up   : catat namanya ke "antrian UP"   (ringan, tanpa kirim)
+Tiap pelanggan disconnect → On Down: catat namanya ke "antrian DOWN" (ringan, tanpa kirim)
 
-Kita isi kedua kolom itu dengan script yang mengirim pesan ke Telegram. Karena ini
-event bawaan, notif datang **seketika** (tidak perlu scheduler).
+Scheduler tiap ~30 detik jalankan "kirim-notif":
+   - antrian kosong?  -> selesai, tidak kirim apa-apa (nyaris nol kerja)
+   - ada isi?         -> kirim 1 pesan ringkasan, lalu kosongkan antrian
+```
+
+- **On Up/On Down** cuma menambah 1 nama ke daftar (variabel global). Tidak ada
+  loop berat, tidak ada `fetch` → tidak kena race saat sesi turun.
+- **Pengiriman** dilakukan scheduler di konteks sistem → `fetch` selalu tuntas.
+- **Maksimal 1 pesan per interval** → jauh di bawah limit Telegram.
 
 ---
 
 ## Yang perlu disiapkan
-
 - Akses **MikroTik** (Winbox).
-- **Bot Telegram** + **Chat ID** (boleh pakai yang sama dengan Alat 1).
-- Router bisa akses internet (untuk kirim ke Telegram).
+- **Bot Telegram** + **Chat ID** (boleh sama dengan Alat 1; disarankan grup terpisah).
+- Router bisa akses internet.
 
 ---
 
 ## Langkah 1 — Buat bot Telegram
+Sama seperti Alat 1: @BotFather `/newbot` → token; kirim pesan ke bot →
+`https://api.telegram.org/bot<TOKEN>/getUpdates` → ambil Chat ID.
+Detail: [README Alat 1](../1-notif-profil-pppoe#langkah-1--buat-bot-telegram).
 
-Sama seperti Alat 1. Ringkasnya:
-1. Chat **@BotFather** → `/newbot` → dapat **token**.
-2. Kirim pesan ke bot Anda, buka `https://api.telegram.org/bot<TOKEN>/getUpdates`,
-   cari `"chat":{"id":...}` → itu **Chat ID**.
-
-Detail lengkap ada di [README Alat 1](../1-notif-profil-pppoe#langkah-1--buat-bot-telegram).
+> **Token TIDAK diisi di On Up/On Down** — cukup di script pengirim (Langkah 3).
 
 ---
 
-## Langkah 2 — Pasang di profil (lewat Winbox)
+## Langkah 2 — Pasang pencatat di profil (On Up/On Down)
 
-Notif ini dipasang **per profil**. Pasang di profil paket yang dipakai pelanggan
-(mis. `PAKET100`, `PAKET150`, dst). Ulangi langkah untuk tiap profil.
+Pasang di **profil paket** yang dipakai pelanggan (mis. `PAKET100`, dst). Ulangi per profil.
 
-1. 🖥️ Buka file [`ppp-on-up.rsc`](ppp-on-up.rsc) & [`ppp-on-down.rsc`](ppp-on-down.rsc),
-   ganti `ISI_TOKEN_BOT` & `ISI_CHAT_ID` dengan milik Anda. Salin isinya.
-2. 🪟 Winbox → menu **PPP** → tab **Profiles** → **double-click** profil (mis. `PAKET100`).
-3. Cari kolom **On Up** → **tempel** seluruh isi `ppp-on-up.rsc`.
-4. Cari kolom **On Down** → **tempel** seluruh isi `ppp-on-down.rsc`.
-5. **OK**. Ulangi untuk profil paket lain.
+1. 🪟 Winbox → **PPP → Profiles** → **double-click** profil.
+2. Kolom **On Up** → tempel isi [`ppp-on-up.rsc`](ppp-on-up.rsc).
+3. Kolom **On Down** → tempel isi [`ppp-on-down.rsc`](ppp-on-down.rsc).
+4. **OK**. Ulangi untuk profil paket lain.
 
-> Tips: cukup pasang di profil paket aktif. Tidak perlu di profil `ISOLIR`
-> (kecuali Anda memang ingin notif saat sesi isolir naik/turun).
+Isinya cuma 3 baris — tidak ada token, tidak ada fetch.
 
 ---
 
-## Langkah 3 — Uji coba
+## Langkah 3 — Pasang pengirim + scheduler
 
-- Minta salah satu pelanggan (atau perangkat tes) reconnect, **atau** putuskan
-  sesinya dari **PPP → Active Connections** (tombol **–**) lalu biarkan menyambung lagi.
-- Pesan **TERPUTUS** lalu **TERHUBUNG** harus masuk Telegram dalam hitungan detik.
+1. 🖥️ Buka [`kirim-notif.rsc`](kirim-notif.rsc), ganti `ISI_TOKEN_BOT` & `ISI_CHAT_ID`.
+2. 🪟 Winbox → **System → Scripts → Add (+)**. **Name:** `kirim-notif`, tempel
+   isinya ke **Source** → **OK**.
+3. 🪟 Winbox → **New Terminal**, pasang scheduler (tiap 30 detik):
+   ```rsc
+   /system scheduler
+   add name=kirim-notif interval=30s \
+       on-event="/system script run kirim-notif" \
+       comment="Kirim ringkasan koneksi PPPoE ke Telegram"
+   ```
+
+---
+
+## Langkah 4 — Uji coba
+1. Putus 1–2 user (🪟 PPP → Active Connections → tombol **–**), biarkan menyambung lagi.
+2. Tunggu ≤ 30 detik → 1 pesan ringkasan masuk Telegram berisi UP & DOWN.
+3. Tes manual pengirim (tanpa nunggu scheduler):
+   ```rsc
+   /system script run kirim-notif
+   ```
 
 ---
 
 ## Contoh pesan & cara ubah template
 
-**Saat connect (On Up):**
 ```
-✅ TERHUBUNG
+📡 Update Koneksi
+2026-09-14 22:00:00
 
-PPPoE : budi
-Lokasi : RT03
-Profile : PAKET100
-Waktu : 2026-09-14 21:30:11
-
-Disconnect (3):
-andi, siti, warkop-rt5
+✅ UP: budi, andi
+❌ DOWN: siti
 ```
-**Saat disconnect (On Down):**
-```
-❌ TERPUTUS
+Kalau salah satu kosong pada interval itu, tampil `-`. Kalau **dua-duanya** kosong,
+tidak ada pesan (hemat).
 
-PPPoE : budi
-Lokasi : RT03
-Profile : PAKET100
-Waktu : 2026-09-14 21:30:11
-
-Disconnect (4):
-andi, siti, warkop-rt5, budi
-```
-**Saat banyak yang mati bersamaan** (≥ ambang alarm) — muncul peringatan di atas:
-```
-❌ TERPUTUS
-
-⚠️ BANYAK DISCONNECT
-
-PPPoE : budi
-Lokasi : RT03
-Profile : PAKET100
-Waktu : 2026-09-14 21:30:11
-
-Disconnect (8):
-andi, siti, warkop-rt5, budi, ...
-```
-
-**Isinya:** nama PPPoE, lokasi, profile, waktu; lalu **daftar yang sedang disconnect**
-+ jumlahnya. Kalau banyak drop bareng → muncul peringatan (indikasi gangguan, bukan
-cuma 1 pelanggan). Berguna di lapangan.
-
-### Dari mana "Lokasi" diambil?
-Dari **comment** `/ppp secret`, bagian **sebelum tanda `/`**. Contoh comment:
-```
-RT03 / Budi Santoso - DUE:15
-```
-→ Lokasi = `RT03`. **Kalau comment belum diisi format `.../`** (belum di-set lokasi),
-Lokasi otomatis tampil `-` — script tetap jalan normal, tidak error.
-(Format comment ini juga dipakai [Alat 2/3](../2-reminder-tagihan-container) untuk
-`DUE:` — aman dipakai bersama.)
-
-### Ambang alarm — "muncul kalau berapa yang mati?"
-Di atas script ada:
-```rsc
-:local alarmMati 5
-```
-Artinya peringatan `⚠️ BANYAK DISCONNECT` muncul kalau jumlah yang disconnect
-**≥ 5** (bawaan). Ubah angkanya sesuai selera (mis. `10` untuk jaringan besar).
-Set sangat besar (mis. `9999`) untuk **mematikan** alarm.
-
-**Bagian yang mengatur teks** ada di baris `:local teks (...)`.
+**Template** ada di baris `:local teks (...)` dalam [`kirim-notif.rsc`](kirim-notif.rsc).
 - Teks dalam kutip `"..."` = tetap (boleh diganti).
-- `\\n` = ganti baris, `\\n\\n` = baris kosong (jarak 1 enter).
-- Nilai yang sudah dihitung script:
+- `\\n` = ganti baris, `\\n\\n` = baris kosong.
+- Nilai yang tersedia:
   | Kode | Arti |
   |------|------|
-  | `$nama` | nama PPPoE yang connect/disconnect |
-  | `$lokasi` | lokasi (dari comment sebelum `/`) |
-  | `$profil` | profile pelanggan (mis. PAKET100 / ISOLIR) |
-  | `$waktu` | tanggal & jam |
-  | `$mati` | jumlah PPPoE yang sedang disconnect |
-  | `$daftar` | daftar nama PPPoE yang disconnect |
-  | `$alarm` | baris peringatan (terisi kalau `$mati` ≥ ambang) |
+  | `$waktu` | tanggal & jam saat pengiriman |
+  | `$up` | daftar nama yang connect sejak cek terakhir |
+  | `$down` | daftar nama yang disconnect sejak cek terakhir |
 
-**Contoh mengubah template** (lebih ringkas):
+**Contoh ubah** (cuma yang putus):
 ```rsc
-:local teks ("🔴 " . $nama . " (" . $lokasi . ") putus. Total mati: " . $mati)
+:local teks ("❌ DOWN: " . $down)
 ```
-Hasil: `🔴 budi (RT03) putus. Total mati: 4`
 
 ---
 
-## Catatan penting
+## Atur kecepatan (interval)
+Ganti `interval=30s` di scheduler:
+- `interval=20s` → lebih cepat (tetap aman).
+- `interval=1m` → lebih hemat & lebih jarang.
+Makin panjang interval = makin sedikit pesan (kejadian digabung jadi 1). Tetap 1
+pesan per interval, jadi tetap aman dari limit.
 
-- **JANGAN kirim password pelanggan** ke grup Telegram. Secara teknis bisa dibaca
-  (`/ppp secret get ... password`), tapi itu **bocor privasi** — jangan lakukan.
-  Template di sini sengaja tidak menyertakannya.
-- **Bisa jadi ramai.** Kalau banyak pelanggan atau jaringan sering "kedip"
-  (flapping), pesan connect/disconnect bisa membanjiri. Pertimbangkan mengirim ke
-  **grup khusus** yang bisa di-mute, atau pasang hanya di sebagian profil.
-- Kalau fetch error SSL, set DNS dulu: `/ip dns set servers=1.1.1.1,8.8.8.8`
-  (lihat catatan CA di [README Alat 1](../1-notif-profil-pppoe#kalau-ada-masalah)).
+---
+
+## Catatan
+- Kalau 1 user **flap** (putus-sambung) dalam 1 interval, namanya bisa muncul di UP
+  **dan** DOWN sekaligus pada pesan itu — wajar.
+- **Jangan kirim password** pelanggan (bocor privasi) — template ini tidak memakainya.
+- SSL error? `/ip dns set servers=1.1.1.1,8.8.8.8` (lihat catatan CA di
+  [README Alat 1](../1-notif-profil-pppoe#kalau-ada-masalah)).
 
 ---
 
 ## Kalau ada masalah
-
 | Gejala | Solusi |
 |--------|--------|
-| Tidak ada pesan | Cek token & chat id. Tes kirim manual (lihat README Alat 1). Pastikan script benar-benar tertempel di kolom On Up/On Down profil yang dipakai pelanggan. |
-| Hanya connect / hanya disconnect yang masuk | Berarti salah satu kolom (On Up **atau** On Down) belum diisi. |
-| Pesan membanjiri | Jaringan flapping. Kirim ke grup yang di-mute, atau kurangi profil yang dipasangi. |
-| Daftar "yang mati" sangat panjang | Kalau pelanggan sangat banyak & banyak yang mati, daftar bisa panjang (batas Telegram 4096 karakter). Bisa hapus baris `Yang mati` dari template dan cukup tampilkan angka `$mati`. |
-| Angka `Mati` seperti telat 1 saat disconnect | Wajar — saat On Down, sesi yang baru putus kadang masih terhitung sesaat. Selisih 1 tidak masalah. |
+| Tidak ada pesan sama sekali | Tes `/system script run kirim-notif`. Cek token & chat id di `kirim-notif.rsc`. |
+| Pesan kosong / tidak ada nama | Pastikan On Up/On Down benar-benar tertempel di profil yang dipakai pelanggan (cek `/ppp profile print detail`). |
+| Hanya UP atau hanya DOWN | Salah satu kolom (On Up / On Down) belum diisi. |
+| Ingin lebih jarang/ramai | Ubah `interval` scheduler. |
 
 ---
 
 ## Cara mencopot
-🪟 Winbox → **PPP → Profiles** → double-click tiap profil → **kosongkan** kolom
-**On Up** dan **On Down** → **OK**.
+```rsc
+/system scheduler remove [find name=kirim-notif]
+/system script remove [find name=kirim-notif]
+:global pppNotifUp; :set pppNotifUp ""
+:global pppNotifDown; :set pppNotifDown ""
+```
+Lalu 🪟 PPP → Profiles → kosongkan kolom **On Up** & **On Down** tiap profil.

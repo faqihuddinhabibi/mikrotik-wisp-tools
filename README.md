@@ -55,10 +55,11 @@ mikrotik-wisp-tools/
 │   ├── README.md                  (setup nginx ada di README, tanpa Docker)
 │   └── mikrotik/                  script RouterOS
 │
-├── 4-notif-koneksi-pppoe/         ALAT 4 — notif Telegram connect/disconnect
+├── 4-notif-koneksi-pppoe/         ALAT 4 — ringkasan connect/disconnect ke Telegram
 │   ├── README.md
-│   ├── ppp-on-up.rsc              (script kolom "On Up")
-│   └── ppp-on-down.rsc            (script kolom "On Down")
+│   ├── ppp-on-up.rsc              (kolom "On Up" — catat ke antrian)
+│   ├── ppp-on-down.rsc            (kolom "On Down" — catat ke antrian)
+│   └── kirim-notif.rsc            (script + scheduler: kirim ringkasan batch)
 │
 ├── LICENSE
 └── README.md
