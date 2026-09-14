@@ -1,79 +1,77 @@
-# Kirim ringkasan koneksi PPPoE -> Telegram (jalankan via scheduler ~30 detik)
+# Notif koneksi PPPoE (snapshot) -> Telegram. Jalankan via scheduler ~30 detik.
+# Kirim HANYA saat daftar offline berubah: siapa yang baru nyala + daftar yang mati.
 
 # ---- GANTI ----
 :local botToken "ISI_TOKEN_BOT"
 :local chatId   "ISI_CHAT_ID"
 # ---------------
+:local maxList 40
 
-:global pppNotifUp
-:global pppNotifDown
-:local upq ""
-:local downq ""
-:if ([:typeof $pppNotifUp] != "nothing")   do={ :set upq $pppNotifUp }
-:if ([:typeof $pppNotifDown] != "nothing") do={ :set downq $pppNotifDown }
-:set pppNotifUp ""
-:set pppNotifDown ""
+:global pppOfflinePrev
+:local firstRun false
+:if ([:typeof $pppOfflinePrev] = "nothing") do={ :set firstRun true; :set pppOfflinePrev [:toarray ""] }
 
-:if (([:len $upq] > 0) || ([:len $downq] > 0)) do={
-    :local kedip   [:toarray ""]
-    :local changed [:toarray ""]
+# kumpulan nama yang AKTIF sekarang
+:local activeSet [:toarray ""]
+:foreach a in=[/ppp active find] do={ :set ($activeSet->[/ppp active get $a name]) 1 }
 
-    :local rest $downq
-    :while ([:len $rest] > 0) do={
-        :local p [:find $rest ", "]
-        :local nm ""
-        :if ([:typeof $p] = "num") do={ :set nm [:pick $rest 0 $p]; :set rest [:pick $rest ($p + 2) [:len $rest]] } else={ :set nm $rest; :set rest "" }
-        :if ([:len $nm] > 0) do={
-            :local c ($kedip->$nm)
-            :if ([:typeof $c] = "nothing") do={ :set c 0 }
-            :set ($kedip->$nm) ($c + 1)
-            :set ($changed->$nm) 1
+# kumpulan yang OFFLINE sekarang
+:local offNow [:toarray ""]
+:local nMati 0
+:foreach s in=[/ppp secret find] do={
+    :local nm [/ppp secret get $s name]
+    :if ([:typeof ($activeSet->$nm)] = "nothing") do={
+        :set ($offNow->$nm) 1
+        :set nMati ($nMati + 1)
+    }
+}
+
+# deteksi perubahan + daftar "baru nyala" (tadinya mati, sekarang aktif)
+:local changed false
+:local recovered ""
+:local nRec 0
+:foreach nm,v in=$pppOfflinePrev do={
+    :if ([:typeof ($offNow->$nm)] = "nothing") do={
+        :set changed true
+        :set nRec ($nRec + 1)
+        :if ($nRec <= $maxList) do={ :set recovered ($recovered . $nm . ", ") }
+    }
+}
+:foreach nm,v in=$offNow do={
+    :if ([:typeof ($pppOfflinePrev->$nm)] = "nothing") do={ :set changed true }
+}
+
+:if ($firstRun) do={
+    :set pppOfflinePrev $offNow
+} else={
+    :if ($changed) do={
+        :local mati ""
+        :local lm 0
+        :foreach nm,v in=$offNow do={
+            :if ($lm < $maxList) do={ :set mati ($mati . $nm . ", "); :set lm ($lm + 1) }
         }
+        :if ([:len $mati] > 0) do={ :set mati [:pick $mati 0 ([:len $mati] - 2)] } else={ :set mati "-" }
+        :if ($nMati > $lm) do={ :set mati ($mati . " … +" . ($nMati - $lm) . " lagi") }
+
+        :if ([:len $recovered] > 0) do={ :set recovered [:pick $recovered 0 ([:len $recovered] - 2)] } else={ :set recovered "-" }
+        :if ($nRec > $maxList) do={ :set recovered ($recovered . " … +" . ($nRec - $maxList) . " lagi") }
+
+        :local total [/ppp secret print count]
+        :local aktif [/ppp active print count]
+        :local waktu "$[/system clock get date] $[/system clock get time]"
+
+        :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
+                     "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
+                     "🟢 <b>Baru nyala</b>: " . $recovered . "\\n" . \
+                     "🔴 <b>Yang mati</b> (" . $nMati . "): " . $mati)
+
+        :do {
+            /tool fetch keep-result=no http-method=post \
+                http-header-field="Content-Type: application/json" \
+                url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
+                http-data=("{\"chat_id\":\"" . $chatId . "\",\"parse_mode\":\"HTML\",\"text\":\"" . $teks . "\"}")
+        } on-error={}
+
+        :set pppOfflinePrev $offNow
     }
-    :set rest $upq
-    :while ([:len $rest] > 0) do={
-        :local p [:find $rest ", "]
-        :local nm ""
-        :if ([:typeof $p] = "num") do={ :set nm [:pick $rest 0 $p]; :set rest [:pick $rest ($p + 2) [:len $rest]] } else={ :set nm $rest; :set rest "" }
-        :if ([:len $nm] > 0) do={ :set ($changed->$nm) 1 }
-    }
-
-    :local maxList 30
-    :local up ""
-    :local down ""
-    :local nUp 0
-    :local nDown 0
-    :local lUp 0
-    :local lDown 0
-    :foreach nm,x in=$changed do={
-        :local kd ($kedip->$nm)
-        :if ([:typeof $kd] = "nothing") do={ :set kd 0 }
-        :if ([:len [/ppp active find where name=$nm]] > 0) do={
-            :set nUp ($nUp + 1)
-            :if ($lUp < $maxList) do={ :set up ($up . $nm . " (" . $kd . "), "); :set lUp ($lUp + 1) }
-        } else={
-            :set nDown ($nDown + 1)
-            :if ($lDown < $maxList) do={ :set down ($down . $nm . " (" . $kd . "), "); :set lDown ($lDown + 1) }
-        }
-    }
-    :if ([:len $up] > 0)   do={ :set up   [:pick $up 0 ([:len $up] - 2)] }     else={ :set up "-" }
-    :if ([:len $down] > 0) do={ :set down [:pick $down 0 ([:len $down] - 2)] } else={ :set down "-" }
-    :if ($nUp > $lUp)     do={ :set up   ($up . " … +" . ($nUp - $lUp) . " lagi") }
-    :if ($nDown > $lDown) do={ :set down ($down . " … +" . ($nDown - $lDown) . " lagi") }
-
-    :local total [/ppp secret print count]
-    :local aktif [/ppp active print count]
-    :local waktu "$[/system clock get date] $[/system clock get time]"
-
-    :local teks ("<b>Update Koneksi</b>\\n" . $waktu . "\\n" . \
-                 "Aktif: " . $aktif . "/" . $total . "\\n\\n" . \
-                 "🟢 <b>UP</b> (" . $nUp . "): " . $up . "\\n" . \
-                 "🔴 <b>DOWN</b> (" . $nDown . "): " . $down)
-
-    :do {
-        /tool fetch keep-result=no http-method=post \
-            http-header-field="Content-Type: application/json" \
-            url=("https://api.telegram.org/bot" . $botToken . "/sendMessage") \
-            http-data=("{\"chat_id\":\"" . $chatId . "\",\"parse_mode\":\"HTML\",\"text\":\"" . $teks . "\"}")
-    } on-error={}
 }

@@ -10,8 +10,8 @@ Alat yang saling melengkapi:
 2. **Reminder tagihan otomatis** — halaman pengingat muncul di HP pelanggan sehari
    sebelum jatuh tempo (mirip splash page wifi.id), **+ isolir** (blokir + halaman
    "silakan bayar"). *(Alat 2 atau 3, tergantung tempat hosting)*
-3. **Notif connect/disconnect** — pesan Telegram real-time saat pelanggan
-   terhubung/terputus. *(Alat 4)*
+3. **Notif koneksi** — pesan Telegram berisi daftar pelanggan yang **mati** & yang
+   **baru nyala**, dikirim saat ada perubahan. *(Alat 4)*
 
 Berjalan di **RouterOS 7.x** (diuji di perangkat x86). Cocok untuk jaringan kecil
 yang ingin otomatisasi sederhana tanpa server mahal.
@@ -55,11 +55,9 @@ mikrotik-wisp-tools/
 │   ├── README.md                  (setup nginx ada di README, tanpa Docker)
 │   └── mikrotik/                  script RouterOS
 │
-├── 4-notif-koneksi-pppoe/         ALAT 4 — ringkasan connect/disconnect ke Telegram
+├── 4-notif-koneksi-pppoe/         ALAT 4 — notif "siapa yang mati/nyala" ke Telegram
 │   ├── README.md
-│   ├── ppp-on-up.rsc              (kolom "On Up" — catat ke antrian)
-│   ├── ppp-on-down.rsc            (kolom "On Down" — catat ke antrian)
-│   └── kirim-notif.rsc            (script + scheduler: kirim ringkasan batch)
+│   └── kirim-notif.rsc            (1 script + scheduler; tanpa edit profil)
 │
 ├── LICENSE
 └── README.md
