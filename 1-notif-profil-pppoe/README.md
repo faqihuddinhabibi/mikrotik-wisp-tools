@@ -131,25 +131,23 @@ Chat ID = alamat tujuan pesan (bisa chat pribadi atau grup).
 
 ## Langkah 4 — Pasang scheduler (penjadwal)
 
-Agar script jalan otomatis tiap 30 menit. Buka **New Terminal**, tempel (1 baris):
+Agar script jalan otomatis tiap 30 menit. 🪟 **System → Scheduler → Add (+)**:
+- **Name:** `pppoe-profile-watch`
+- **Interval:** `00:30:00`
+- **On Event:** `/system script run pppoe-profile-watch`
+- **OK**.
 
-```rsc
-/system scheduler add name=pppoe-profile-watch interval=30m on-event="/system script run pppoe-profile-watch" comment="Cek perubahan profil PPPoE -> Telegram"
-```
+> Alternatif via terminal (1 baris):
+> `/system scheduler add name=pppoe-profile-watch interval=30m on-event="/system script run pppoe-profile-watch" comment="Cek perubahan profil PPPoE -> Telegram"`
 
 ---
 
 ## Langkah 5 — Uji coba
 
-1. Jalankan sekali manual (untuk "mencatat" kondisi awal):
-   ```rsc
-   /system script run pppoe-profile-watch
-   ```
+1. Jalankan sekali manual (untuk "mencatat" kondisi awal): 🪟 **System → Scripts**
+   → klik `pppoe-profile-watch` → tombol **Run Script**.
 2. Ubah profil salah satu pelanggan di **PPP → Secrets** (mis. dari `AKTIF` ke `ISOLIR`).
-3. Jalankan lagi:
-   ```rsc
-   /system script run pppoe-profile-watch
-   ```
+3. **Run Script** lagi.
 4. Pesan seperti ini harus masuk Telegram:
    ```
    Perubahan PPPoE (1)

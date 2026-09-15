@@ -106,16 +106,18 @@ server, otomatis update dari repo).
 
 ## Bagian A — Halaman reminder di GitHub Pages
 
-Halaman reminder = file `docs/index.html` di repo ini. Anda perlu **salinan repo
-sendiri** supaya nomor WA-nya punya Anda.
+Halaman reminder = file `docs/index.html`. GitHub Pages menyajikannya langsung
+dari repo, jadi file ini harus ada di repo **milik Anda**.
 
-1. Buka https://github.com/faqihuddinhabibi/mikrotik-wisp-tools → klik **Fork**
-   (kanan atas) → **Create fork**. Sekarang Anda punya
-   `github.com/USERNAME/mikrotik-wisp-tools`.
-2. Di fork Anda, buka file `docs/index.html` → klik ikon **pensil** (Edit).
-3. Cari baris `<!-- GANTI: nomor WA -->`, ganti `6281234567890` dengan nomor WA
-   admin (format `62…`, tanpa `+`, tanpa `0` di depan). Boleh ganti teks juga.
-4. **Commit changes** (tombol hijau).
+1. Buka https://github.com/faqihuddinhabibi/mikrotik-wisp-tools → **Fork** (kanan
+   atas) → **Create fork**. Sekarang Anda punya `github.com/USERNAME/mikrotik-wisp-tools`.
+2. Ambil ke komputer: **Code → Download ZIP** (atau `git clone`), ekstrak.
+3. Buka `docs/index.html` dengan editor teks (Notepad / VS Code). Cari
+   `<!-- GANTI: nomor WA -->`, ganti `6281234567890` dengan nomor WA admin
+   (format `62…`, tanpa `+`, tanpa `0` di depan). Boleh ganti teks juga. Simpan.
+4. Kirim balik ke GitHub: di halaman repo Anda buka folder `docs` → **Add file →
+   Upload files** → seret `index.html` → **Commit changes**. (Kalau pakai git:
+   `git add`, `git commit`, `git push`.)
 5. Nyalakan GitHub Pages: **Settings** (tab repo) → menu kiri **Pages** →
    **Build and deployment** → Source: **Deploy from a branch** → Branch: **main**,
    folder: **/docs** → **Save**.
@@ -123,7 +125,9 @@ sendiri** supaya nomor WA-nya punya Anda.
    `https://USERNAME.github.io/mikrotik-wisp-tools/`
    Buka di HP → halaman reminder tampil dengan nomor WA Anda. **Catat alamat ini.**
 
-> Update teks/nomor nanti: edit file di GitHub → Commit → 1 menit kemudian live.
+> Nomor WA di halaman ini memang **publik** — siapa pun yang membuka halaman
+> melihatnya (itu fungsi tombolnya). Pakai nomor WA bisnis/admin, bukan pribadi.
+> Update teks/nomor nanti: edit di komputer → upload/push lagi → 1 menit live.
 
 ---
 
@@ -132,8 +136,10 @@ sendiri** supaya nomor WA-nya punya Anda.
 Halaman isolir = file [`error.html`](error.html) di folder ini. Harus masuk ke
 **Files → `webproxy/error.html`** di router.
 
-**B1. Ganti nomor WA** — di fork Anda, edit `2-reminder-isolir/error.html`, cari
-`<!-- GANTI: nomor WA -->`, ganti nomornya → Commit.
+Halaman ini **tidak lewat GitHub** — dari komputer langsung ke router.
+
+**B1. Ganti nomor WA** — di komputer, buka `2-reminder-isolir/error.html` dengan
+editor teks, cari `<!-- GANTI: nomor WA -->`, ganti nomornya. Simpan.
 
 **B2. Buat folder `webproxy` di router** (sekali):
 1. 🪟 Winbox → **IP → Web Proxy** → tombol **Settings**.
@@ -142,19 +148,16 @@ Halaman isolir = file [`error.html`](error.html) di folder ini. Harus masuk ke
    halaman error bawaan.
 4. Cek: 🪟 **Files** → ada folder `webproxy` berisi `error.html`.
 
-**B3. Timpa `error.html` dengan halaman isolir** — pilih salah satu:
+**B3. Timpa `error.html` dengan halaman isolir:**
+1. 🪟 **Files** → **double-click folder `webproxy`** (masuk ke dalamnya).
+2. Seret (drag-drop) `error.html` dari komputer ke jendela Files itu. File lama
+   tertimpa.
+3. **Cek:** `webproxy/error.html` ukurannya ±5,6 KB (bawaan hanya ±1 KB). Kalau
+   masih ±1 KB, file masuk ke root — hapus, ulangi dari langkah 1.
 
-**Cara 1 — tarik dari GitHub (paling mudah).** 🪟 **New Terminal**, ganti `USERNAME`:
-```rsc
-/tool fetch url="https://raw.githubusercontent.com/USERNAME/mikrotik-wisp-tools/main/2-reminder-isolir/error.html" dst-path=webproxy/error.html
-```
-Harus keluar `status: finished`. Ulangi perintah ini setiap kali Anda mengubah
-halaman isolir di GitHub.
-
-**Cara 2 — upload manual.** Download `error.html` ke komputer → 🪟 **Files** →
-**double-click folder `webproxy`** → drag-drop file ke jendela itu (menimpa yang lama).
-
-**Cek:** 🪟 Files → `webproxy/error.html` ukurannya ±5,6 KB (bawaan hanya ±1 KB).
+> Alternatif kalau drag ke dalam folder tidak bisa: taruh `error.html` di fork
+> GitHub Anda, lalu di **New Terminal**:
+> `/tool fetch url="https://raw.githubusercontent.com/USERNAME/mikrotik-wisp-tools/main/2-reminder-isolir/error.html" dst-path=webproxy/error.html`
 
 ---
 
@@ -174,7 +177,8 @@ Satu script menyiapkan semuanya: web-proxy, aturan pengalihan, blokir isolir.
 
 **C2. Upload & jalankan (sekali):**
 1. 🪟 **Files** → drag-drop `setup-reminder-isolir.rsc` (ke root, bukan ke folder).
-2. 🪟 **New Terminal**:
+2. 🪟 **New Terminal** (satu-satunya langkah terminal — script ini memasang 9
+   aturan sekaligus, lebih aman daripada klik satu per satu):
    ```rsc
    /import file-name=setup-reminder-isolir.rsc
    ```
@@ -182,32 +186,28 @@ Satu script menyiapkan semuanya: web-proxy, aturan pengalihan, blokir isolir.
 
 > Aman dijalankan ulang (kalau ganti alamat, dsb.) — aturan lama dihapus dulu.
 
-**C3. Cek hasilnya:**
-```rsc
-/ip proxy access print
-```
-Harus ada **3 baris urut**: `iso-deny`, `wg-allow-page`, `wg-redirect`.
-Urutan ini penting: isolir dicek dulu, lalu izin host halaman (mencegah loop),
-baru pengalihan reminder.
+**C3. Cek hasilnya** — 🪟 **IP → Web Proxy** → tab **Access**. Harus ada **3 baris
+urut**: `iso-deny`, `wg-allow-page`, `wg-redirect`. Urutan ini penting: isolir
+dicek dulu, lalu izin host halaman (mencegah loop), baru pengalihan reminder.
+Lalu 🪟 **IP → Firewall** → tab **NAT** ada `iso-redirect80` & `wg-redirect80`;
+tab **Filter Rules** ada `iso-allow-dns`, `iso-allow-dns-tcp`, `iso-drop`.
 
 ---
 
 ## Bagian D — Penjadwal reminder
 
-1. Buka [`billing-scheduler.rsc`](billing-scheduler.rsc). Opsional: isi `botToken`
-   & `chatId` kalau ingin ringkasan Telegram (kosong = tidak kirim).
+1. Buka [`billing-scheduler.rsc`](billing-scheduler.rsc) di komputer. Opsional:
+   isi `botToken` & `chatId` kalau ingin ringkasan Telegram (kosong = tidak kirim).
 2. 🪟 **System → Scripts → Add (+)**. **Name:** `billing-scheduler`, tempel isinya
    ke **Source** → **OK**.
-3. 🪟 **New Terminal**, pasang scheduler (1 baris):
-   ```rsc
-   /system scheduler add name=billing-scheduler interval=1h on-event="/system script run billing-scheduler" comment="Isi daftar reminder tagihan H-1"
-   ```
-4. Tes manual:
-   ```rsc
-   /system script run billing-scheduler
-   /ip firewall address-list print where list="tagihan-reminder"
-   ```
-   Kalau hari ini ada pelanggan H-1 yang online → IP-nya muncul di daftar.
+3. 🪟 **System → Scheduler → Add (+)**:
+   - **Name:** `billing-scheduler`
+   - **Interval:** `01:00:00`
+   - **On Event:** `/system script run billing-scheduler`
+   - **OK**.
+4. Tes manual: 🪟 **System → Scripts** → klik `billing-scheduler` → tombol
+   **Run Script**. Lalu 🪟 **IP → Firewall** → tab **Address Lists** → cari list
+   `tagihan-reminder`. Kalau hari ini ada pelanggan H-1 yang online → IP-nya ada.
 
 ---
 
@@ -222,10 +222,10 @@ tanggal (**1–28**).
 Artinya jatuh tempo **tanggal 15**. Reminder muncul **tanggal 14** (H-1).
 `DUE:1` → reminder muncul di **hari terakhir bulan sebelumnya** (30/31, otomatis).
 
-**Uji coba cepat:** set `DUE:` seorang pelanggan = **besok**, jalankan
-`/system script run billing-scheduler`, lalu di HP pelanggan itu matikan-nyalakan
-wifi → popup reminder muncul. Setelah tes, kembalikan `DUE:`-nya dan hapus dari
-daftar: `/ip firewall address-list remove [find list="tagihan-reminder"]`.
+**Uji coba cepat:** set `DUE:` seorang pelanggan = **besok** → 🪟 System → Scripts →
+`billing-scheduler` → **Run Script** → di HP pelanggan itu matikan-nyalakan wifi →
+popup reminder muncul. Setelah tes, kembalikan `DUE:`-nya, lalu 🪟 IP → Firewall →
+Address Lists → pilih baris `tagihan-reminder` miliknya → tombol **–**.
 
 ---
 
@@ -277,19 +277,20 @@ Contoh: `Kantor Desa - per 3 bln SKIP`.
 | **Isolir** | PPP → Secrets → Profile = `ISOLIR`; lalu Active Connections → **–** |
 | **Aktifkan lagi** | PPP → Secrets → Profile = paket semula; lalu Active Connections → **–** |
 | **Kecualikan** dari reminder | tambah `SKIP` di Comment |
-| **Ganti teks / nomor WA reminder** | edit `docs/index.html` di GitHub → Commit (live ±1 menit) |
-| **Ganti teks / nomor WA isolir** | edit `2-reminder-isolir/error.html` di GitHub → Commit → jalankan lagi `/tool fetch ...` dari Bagian B3 |
+| **Ganti teks / nomor WA reminder** | edit `docs/index.html` di komputer → upload/push ke GitHub (live ±1 menit) |
+| **Ganti teks / nomor WA isolir** | edit `error.html` di komputer → Winbox Files → masuk folder `webproxy` → drag file (Bagian B3) |
 
 ---
 
 ## Keamanan
 
 Web-proxy mendengar di port **8080**. Aturan `wg-redirect` (deny) membuatnya tidak
-bisa dipakai sebagai proxy terbuka, tapi lebih aman tutup dari internet. Ganti
-`ether1` dengan interface WAN Anda:
-```rsc
-/ip firewall filter add chain=input protocol=tcp dst-port=8080 in-interface=ether1 action=drop comment="tutup proxy dari WAN" place-before=0
-```
+bisa dipakai sebagai proxy terbuka, tapi lebih aman tutup dari internet.
+🪟 **IP → Firewall → Filter Rules → Add (+)**:
+- Tab **General**: Chain `input`, Protocol `tcp`, Dst. Port `8080`,
+  In. Interface = interface WAN Anda (mis. `ether1`).
+- Tab **Action**: Action `drop`. Comment: `tutup proxy dari WAN` → **OK**.
+- Seret aturan ini ke **paling atas** daftar.
 
 ---
 
@@ -312,12 +313,12 @@ bisa dipakai sebagai proxy terbuka, tapi lebih aman tutup dari internet. Ganti
 
 | Gejala | Solusi |
 |--------|--------|
-| Popup reminder tidak muncul | `/ip firewall address-list print where list="tagihan-reminder"` — IP pelanggan harus ada. Kosong? Cek `DUE:` = besok & pelanggan online. `/ip proxy print` → `enabled: yes`. |
-| Popup muncul tapi halaman putih / loop | `pageHost` di `wg-allow-page` harus **sama persis** dengan host di `pageUrl` (mis. `USERNAME.github.io`). Cek `/ip proxy access print`. Buka `http://USERNAME.github.io/mikrotik-wisp-tools/` dari HP biasa — harus tampil. |
+| Popup reminder tidak muncul | IP → Firewall → **Address Lists**: IP pelanggan harus ada di `tagihan-reminder`. Kosong? Cek `DUE:` = besok & pelanggan online. IP → Web Proxy → Settings: **Enabled** tercentang. |
+| Popup muncul tapi halaman putih / loop | `pageHost` di `wg-allow-page` harus **sama persis** dengan host di `pageUrl` (mis. `USERNAME.github.io`). Cek IP → Web Proxy → tab **Access**. Buka `http://USERNAME.github.io/mikrotik-wisp-tools/` dari HP biasa — harus tampil. |
 | Halaman isolir masih bawaan MikroTik ("ERROR: Forbidden") | `error.html` belum tertimpa. Cek ukuran di Files → `webproxy/error.html` (±5,6 KB). Ulangi Bagian B3. |
-| Pelanggan isolir tidak dapat halaman apa pun | DNS harus jalan: `iso-allow-dns` harus **di atas** `iso-drop` (`/ip firewall filter print`). Kalau ada aturan `forward` lain yang drop lebih dulu, pindahkan `iso-*` ke atas. |
-| Semua orang ke-redirect | NAT `wg-redirect80` harus `src-address-list=tagihan-reminder`. Jangan dihapus `src-address-list`-nya. |
-| Pelanggan sudah bayar tapi masih kena reminder | Reminder hanya H-1, maksimal 2 jam setelah bayar. Hentikan seketika: `/ip firewall address-list remove [find list="tagihan-reminder" comment=NAMA]`. |
+| Pelanggan isolir tidak dapat halaman apa pun | DNS harus jalan: di IP → Firewall → **Filter Rules**, `iso-allow-dns` harus **di atas** `iso-drop`. Kalau ada aturan `forward` lain yang drop lebih dulu, seret `iso-*` ke atasnya. |
+| Semua orang ke-redirect | IP → Firewall → NAT → `wg-redirect80` harus punya **Src. Address List** = `tagihan-reminder`. Jangan dikosongkan. |
+| Pelanggan sudah bayar tapi masih kena reminder | Reminder hanya H-1, maksimal 2 jam. Hentikan seketika: IP → Firewall → Address Lists → pilih barisnya → **–**. |
 | `/import` error "syntax error" | File rusak karena tanda kutip keriting (copy dari editor teks). Download ulang file asli / pakai tombol **Raw** di GitHub. |
 
 ---
