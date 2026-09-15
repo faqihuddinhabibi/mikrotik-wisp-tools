@@ -10,8 +10,6 @@ Alat yang saling melengkapi:
 2. **Reminder tagihan otomatis** — halaman pengingat muncul di HP pelanggan sehari
    sebelum jatuh tempo (mirip splash page wifi.id), **+ isolir** (blokir + halaman
    "silakan bayar"). *(Alat 2 atau 3, tergantung tempat hosting)*
-3. **Notif koneksi** — pesan Telegram: yang **terhubung kembali**, yang **masih mati**,
-   & yang **sering putus** (flap), dikirim tiap ~30 detik saat ada aktivitas. *(Alat 4)*
 
 Berjalan di **RouterOS 7.x** (diuji di perangkat x86). Cocok untuk jaringan kecil
 yang ingin otomatisasi sederhana tanpa server mahal.
@@ -54,11 +52,6 @@ mikrotik-wisp-tools/
 ├── 3-reminder-tagihan-vps/        ALAT 2 & 3 — reminder + isolir, halaman di VPS
 │   ├── README.md                  (setup nginx ada di README, tanpa Docker)
 │   └── mikrotik/                  script RouterOS
-│
-├── 4-notif-koneksi-pppoe/         ALAT 4 — notif koneksi (mati/nyala/sering putus)
-│   ├── README.md
-│   ├── ppp-on-down.rsc            (kolom "On Down" — hitung flap, tanpa kirim)
-│   └── kirim-notif.rsc            (scheduler ~30s: kirim ringkasan)
 │
 ├── LICENSE
 └── README.md
@@ -106,12 +99,11 @@ token berikut):
 | `DUE:NN` | Tanggal jatuh tempo (pakai **1–28**) | `Budi RT03 - 20Mbps \| DUE:15` |
 | `SKIP` | Jangan pernah tampilkan halaman reminder ke user ini | `Kantor Desa - per 3 bln SKIP` |
 
-**Format yang disarankan** (mendukung semua alat sekaligus):
+**Format yang disarankan:**
 ```
-NAMA-DAERAH / nama pelanggan - DUE:NN
+nama pelanggan - DUE:NN
 ```
-Contoh: `RT03 / Budi Santoso - DUE:15`
-- Bagian **sebelum `/`** dipakai [Alat 4](4-notif-koneksi-pppoe) sebagai **Lokasi**.
+Contoh: `Budi Santoso - DUE:15`
 - `DUE:NN` dipakai [Alat 2/3](2-reminder-tagihan-container) untuk reminder.
 - Tambah `SKIP` kalau user tidak boleh kena halaman reminder.
 
